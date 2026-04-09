@@ -6,7 +6,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Radio Explorer · Móvil optimizado</title>
+  <title>Radio Explorer · Precisión mejorada</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
   <style>
@@ -48,7 +48,6 @@
       height: 100vh;
     }
 
-    /* ── Sidebar (desktop) ── */
     .sidebar {
       background: var(--panel);
       border-right: 1px solid var(--border);
@@ -58,24 +57,9 @@
       position: relative;
       z-index: 10;
     }
-    .sidebar::before {
-      content: '';
-      position: absolute; top: -100px; left: -100px;
-      width: 300px; height: 300px;
-      background: radial-gradient(circle, rgba(0,229,160,0.05) 0%, transparent 70%);
-      pointer-events: none;
-    }
 
-    /* ── Map wrapper ── */
-    .map-wrap {
-      position: relative;
-      overflow: hidden;
-    }
-    #map {
-      width: 100%;
-      height: 100%;
-      background: #0d0f14;
-    }
+    .map-wrap { position: relative; overflow: hidden; }
+    #map { width: 100%; height: 100%; background: #0d0f14; }
 
     /* ════════════════════════════════════
        HEADER
@@ -117,7 +101,6 @@
       color: var(--muted);
     }
 
-    /* ── Inputs ── */
     .input-wrap { position: relative; }
     .input-wrap .ico {
       position: absolute; left: 14px; top: 50%;
@@ -135,7 +118,7 @@
       border-radius: 13px;
       color: var(--input-text);
       font-family: 'DM Sans', sans-serif;
-      font-size: 16px;          /* 16px mínimo para evitar zoom automático en móvil */
+      font-size: 16px;
       font-weight: 500;
       padding: 14px 14px 14px 42px;
       outline: none;
@@ -144,12 +127,9 @@
       transition: border-color .2s, box-shadow .2s, background .2s;
       caret-color: var(--accent);
     }
-    input[type="text"]::placeholder { color: var(--muted); font-weight: 400; opacity: 0.8; }
-    input[type="number"]::placeholder { color: var(--muted); font-weight: 400; opacity: 0.8; }
+    input::placeholder { color: var(--muted); opacity: 0.8; }
 
-    input[type="text"]:focus,
-    input[type="number"]:focus,
-    select:focus {
+    input:focus, select:focus {
       border-color: var(--accent);
       background: #252b40;
       box-shadow: 0 0 0 3px rgba(0,229,160,0.1);
@@ -162,15 +142,9 @@
       background-position: right 16px center;
       padding-right: 40px;
     }
-    select option {
-      background: var(--panel2);
-      color: var(--input-text);
-    }
 
-    /* ── Row controls ── */
     .row2 { display: grid; grid-template-columns: 1fr 100px; gap: 10px; }
 
-    /* ── Color swatches ── */
     .swatch-row { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 4px; }
     .color-swatch {
       width: 34px; height: 34px; border-radius: 10px;
@@ -182,7 +156,6 @@
     .color-swatch:active  { transform: scale(1.15); }
     .color-swatch.active { border-color: #fff; transform: scale(1.08); }
 
-    /* ── Status ── */
     .status {
       font-size: 13px; padding: 10px 14px;
       border-radius: 11px; display: none;
@@ -200,8 +173,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Add button ── */
-    .btn-add {
+    .btn-add, .btn-map-select {
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color: #04070a;
       font-family: 'Syne', sans-serif;
@@ -214,18 +186,23 @@
       touch-action: manipulation;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
-    .btn-add:active { transform: scale(.97); opacity: .9; }
+    .btn-map-select {
+      background: var(--input-bg);
+      color: var(--accent);
+      border: 1.5px solid var(--border);
+      box-shadow: none;
+      padding: 12px;
+      font-size: 14px;
+    }
+    .btn-add:active, .btn-map-select:active { transform: scale(.97); opacity: .9; }
     .btn-add:disabled { opacity: .4; cursor: not-allowed; }
 
-    /* ════════════════════════════════════
-       LOCATIONS LIST
-    ════════════════════════════════════ */
+    /* Locations list */
     .list-header {
       padding: 14px 20px 10px;
       display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
     }
-    .list-header-left { display: flex; align-items: center; gap: 10px; }
     .loc-count {
       font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
       background: rgba(0,229,160,.15); color: var(--accent);
@@ -235,8 +212,6 @@
       font-size: 13px; color: var(--muted);
       background: none; border: none; cursor: pointer;
       padding: 6px 10px; border-radius: 8px;
-      transition: color .15s, background .15s;
-      -webkit-tap-highlight-color: transparent;
     }
     .btn-clear:active { color: #ff9f9f; background: rgba(255,80,80,.08); }
 
@@ -255,28 +230,18 @@
     }
     .empty-state .e-ico { font-size: 36px; opacity: .35; }
 
-    /* ── Location card ── */
     .loc-card {
       background: var(--input-bg);
       border: 1.5px solid var(--border);
       border-radius: 14px;
       overflow: hidden;
-      animation: slideIn .22s ease;
-      transition: border-color .2s, opacity .2s;
     }
-    @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
-
     .loc-card-header {
       display: flex; align-items: center; gap: 10px;
       padding: 14px 14px; cursor: pointer;
-      user-select: none; -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
     }
     .loc-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .loc-name {
-      font-size: 15px; font-weight: 500; color: var(--text);
-      flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    .loc-name { font-size: 15px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .loc-badge {
       font-size: 12px; font-family: 'Syne', sans-serif; font-weight: 700;
       padding: 4px 10px; border-radius: 24px; flex-shrink: 0;
@@ -288,12 +253,8 @@
       border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; background: transparent; color: var(--muted);
-      transition: background .15s; -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
     }
     .loc-btn:active { background: rgba(255,255,255,.08); }
-    .loc-btn.delete:active { background: rgba(255,80,80,.12); color: #ff9f9f; }
-    .loc-btn.focus-btn:active { background: rgba(0,229,160,.1); color: var(--accent); }
 
     .loc-body {
       display: none;
@@ -306,46 +267,20 @@
       display: grid; grid-template-columns: 1fr 90px;
       gap: 9px; margin-bottom: 12px;
     }
-    .loc-edit-row input,
-    .loc-edit-row select {
-      font-size: 15px;
-      padding: 11px 12px;
-      color: var(--input-text);
-      border-radius: 12px;
-    }
-    .loc-edit-row select { padding-left: 12px; }
-
-    .loc-color-label {
-      font-size: 12px; color: var(--muted);
-      letter-spacing: .8px; text-transform: uppercase;
-      font-weight: 600; margin-bottom: 8px;
-    }
     .loc-color-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .loc-swatch {
       width: 32px; height: 32px; border-radius: 10px;
       cursor: pointer; border: 2px solid transparent;
-      transition: transform .12s, border-color .12s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
     }
-    .loc-swatch:active { transform: scale(1.2); }
     .loc-swatch.active { border-color: #fff; }
 
-    /* ── Footer ── */
     .sidebar-footer {
       padding: 10px 20px; border-top: 1px solid var(--border);
       font-size: 11px; color: var(--muted); text-align: center;
       flex-shrink: 0;
     }
 
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-    /* ════════════════════════════════════
-       MAP OVERLAYS
-    ════════════════════════════════════ */
+    /* Map overlays */
     .btn-fit {
       position: absolute; bottom: 20px; right: 14px; z-index: 800;
       background: var(--panel); border: 1.5px solid var(--border);
@@ -354,16 +289,10 @@
       padding: 11px 18px; border-radius: 30px; cursor: pointer;
       display: flex; align-items: center; gap: 8px;
       box-shadow: 0 6px 18px rgba(0,0,0,.5);
-      transition: border-color .15s, color .15s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
     }
     .btn-fit:active { border-color: var(--accent); color: var(--accent); }
 
-    /* ════════════════════════════════════
-       LEAFLET OVERRIDES
-    ════════════════════════════════════ */
-    .leaflet-container { background: #0d0f14; font-family: 'DM Sans', sans-serif; }
+    .leaflet-container { background: #0d0f14; }
     .leaflet-tile { filter: brightness(.84) saturate(.55) hue-rotate(180deg) invert(1); }
     .leaflet-control-zoom { margin: 14px !important; }
     .leaflet-control-zoom a {
@@ -372,26 +301,8 @@
       width: 40px !important; height: 40px !important;
       line-height: 40px !important; font-size: 20px !important;
     }
-    .leaflet-control-attribution {
-      background: rgba(10,12,16,.8) !important;
-      color: var(--muted) !important; font-size: 10px !important;
-    }
-    .leaflet-control-attribution a { color: var(--accent) !important; }
-    .leaflet-popup-content-wrapper {
-      background: var(--panel); color: var(--text);
-      border: 1px solid var(--border); border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.6);
-    }
-    .leaflet-popup-tip { background: var(--panel); }
-    .leaflet-popup-content {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px; line-height: 1.5;
-      margin: 12px 16px !important;
-    }
 
-    /* ════════════════════════════════════
-       AUTOCOMPLETE
-    ════════════════════════════════════ */
+    /* Autocomplete */
     .suggestions-box {
       position: absolute; top: calc(100% + 6px); left: 0; right: 0;
       background: var(--panel2); border: 1.5px solid var(--border);
@@ -404,38 +315,16 @@
       padding: 14px 16px; font-size: 15px; color: var(--text);
       cursor: pointer; display: flex; align-items: flex-start; gap: 12px;
       border-bottom: 1px solid var(--border);
-      transition: background .12s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
     }
     .suggestion-item:last-child { border-bottom: none; }
     .suggestion-item:active { background: rgba(0,229,160,.08); }
-    .s-main { font-weight: 500; line-height: 1.4; color: var(--text); }
+    .s-main { font-weight: 500; line-height: 1.4; }
     .s-sub  { font-size: 12px; color: var(--muted); margin-top: 3px; }
 
-    /* ════════════════════════════════════
-       MOBILE LAYOUT (< 768px)
-       Bottom sheet optimizado con scroll completo
-    ════════════════════════════════════ */
+    /* Mobile */
     @media (max-width: 767px) {
-      html, body { overflow: hidden; height: 100%; height: 100dvh; }
-
-      .app {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        height: 100dvh;
-        grid-template-columns: none;
-        grid-template-rows: none;
-      }
-
-      .map-wrap {
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-      }
-
-      /* Panel desplazable completo */
+      .app { display: block; }
+      .map-wrap { position: fixed; inset: 0; z-index: 0; }
       .sidebar {
         position: fixed;
         left: 0; right: 0; bottom: 0;
@@ -444,103 +333,28 @@
         border-top: 1.5px solid var(--border);
         border-radius: 24px 24px 0 0;
         max-height: 85vh;
-        height: auto;
         background: var(--panel);
         box-shadow: 0 -12px 45px rgba(0,0,0,.7);
-        transition: max-height .32s cubic-bezier(.2,0,0,1);
+        transition: max-height .32s;
         padding-bottom: var(--safe-bottom);
-        backdrop-filter: blur(2px);
-        display: block;           /* Cambio de flex a bloque */
-        overflow-y: auto;         /* Scroll vertical en todo el panel */
-        -webkit-overflow-scrolling: touch;
-      }
-
-      .sidebar.collapsed { max-height: 148px; overflow-y: hidden; }
-      .sidebar.expanded  { max-height: 85vh; }
-
-      .sidebar::before { display: none; }
-
-      /* Tirador sticky */
-      .sheet-handle {
-        display: flex;
-        justify-content: center;
-        padding: 14px 0 8px;
-        cursor: grab;
-        touch-action: none;
-        position: sticky;
-        top: 0;
-        background: var(--panel);
-        z-index: 10;
-        border-radius: 24px 24px 0 0;
-      }
-      .sheet-handle-bar {
-        width: 48px; height: 5px;
-        background: var(--border);
-        border-radius: 3px;
-        opacity: 0.9;
-      }
-
-      /* Ajustes de secciones para bloque */
-      .header {
-        padding: 12px 20px 12px;
-        border-bottom: 1px solid var(--border);
-        flex-shrink: unset;
-      }
-      .logo-text { font-size: 18px; }
-      .tagline { display: block; font-size: 11px; }
-
-      .add-form {
-        padding: 18px 20px;
-        gap: 14px;
-        flex-shrink: unset;
-        border-bottom: 1px solid var(--border);
-      }
-
-      input[type="text"],
-      input[type="number"],
-      select {
-        font-size: 16px;
-        padding: 16px 16px 16px 46px;
-        border-radius: 16px;
-      }
-
-      .btn-add {
-        padding: 18px;
-        font-size: 17px;
-        border-radius: 18px;
-        margin-bottom: 8px;
-      }
-
-      .list-header {
-        padding: 12px 20px 8px;
-        flex-shrink: unset;
-        border-bottom: none;
-      }
-
-      .locations-list {
-        padding: 0 20px 14px;
-        max-height: 40vh;          /* Scroll independiente para la lista */
+        display: block;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        flex: unset;
-        display: block;
       }
-
-      .loc-card-header { padding: 14px; }
-      .loc-btn { width: 48px; height: 48px; font-size: 20px; }
-      .loc-name { font-size: 16px; }
-
-      .btn-fit {
-        bottom: calc(160px + var(--safe-bottom));
-        right: 16px;
-        padding: 12px 18px;
-        font-size: 15px;
+      .sidebar.collapsed { max-height: 148px; overflow-y: hidden; }
+      .sidebar.expanded  { max-height: 85vh; }
+      .sheet-handle {
+        display: flex; justify-content: center;
+        padding: 14px 0 8px;
+        cursor: grab; touch-action: none;
+        position: sticky; top: 0; background: var(--panel); z-index: 10;
+        border-radius: 24px 24px 0 0;
       }
-
+      .sheet-handle-bar { width: 48px; height: 5px; background: var(--border); border-radius: 3px; }
+      .header { padding: 12px 20px; }
+      .add-form { padding: 18px 20px; }
+      .btn-fit { bottom: calc(160px + var(--safe-bottom)); right: 16px; }
       .leaflet-control-zoom { margin-bottom: calc(170px + var(--safe-bottom)) !important; }
-
-      .sidebar-footer { display: none; }
-
       .sheet-toggle {
         position: fixed;
         bottom: calc(160px + var(--safe-bottom));
@@ -552,32 +366,34 @@
         padding: 12px 20px; border-radius: 40px;
         display: flex; align-items: center; gap: 8px;
         box-shadow: 0 6px 18px rgba(0,0,0,.5);
-        cursor: pointer; -webkit-tap-highlight-color: transparent;
-        backdrop-filter: blur(4px);
+        cursor: pointer;
       }
-      .sheet-toggle span { font-size: 12px; color: var(--muted); margin-left: 4px; }
     }
 
-    /* Desktop: hide mobile-only elements */
     .sheet-handle { display: none; }
     .sheet-toggle { display: none; }
+    .mode-indicator {
+      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+      background: var(--panel); border: 1px solid var(--accent);
+      color: var(--accent); padding: 8px 16px; border-radius: 30px;
+      font-size: 13px; font-weight: 600; z-index: 900;
+      display: none; align-items: center; gap: 6px;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
   </style>
 </head>
 <body>
 <div class="app">
-
-  <!-- ═══ SIDEBAR / BOTTOM SHEET ═══ -->
   <aside class="sidebar" id="sidebar">
-    <div class="sheet-handle" id="sheetHandle">
-      <div class="sheet-handle-bar"></div>
-    </div>
+    <div class="sheet-handle" id="sheetHandle"><div class="sheet-handle-bar"></div></div>
 
     <div class="header">
       <div class="logo">
         <div class="logo-icon">📍</div>
         <div class="logo-text">Radio<span>Explorer</span></div>
       </div>
-      <div class="tagline">Múltiples radios · visualización simultánea</div>
+      <div class="tagline">Precisión total · clic en mapa o búsqueda</div>
     </div>
 
     <div class="add-form">
@@ -585,12 +401,12 @@
 
       <div class="input-wrap" style="position:relative;">
         <span class="ico">🔍</span>
-        <input type="text" id="locationInput"
-          placeholder="Dirección, ciudad, lugar…"
-          autocomplete="off" autocorrect="off" spellcheck="false"
-          inputmode="search" />
+        <input type="text" id="locationInput" placeholder="Dirección, lugar o clic en mapa" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="search" />
         <div class="suggestions-box" id="suggestions"></div>
       </div>
+
+      <!-- Botón para seleccionar en mapa -->
+      <button class="btn-map-select" id="mapSelectBtn">📍 Elegir punto en el mapa</button>
 
       <div class="row2">
         <div class="input-wrap">
@@ -603,15 +419,12 @@
         </div>
         <div class="input-wrap">
           <span class="ico" style="left:10px;font-size:13px;">⭕</span>
-          <input type="number" id="radiusInput"
-            value="1" min="0.01" step="0.1"
-            inputmode="decimal"
-            style="padding-left:32px;" />
+          <input type="number" id="radiusInput" value="1" min="0.01" step="0.1" inputmode="decimal" style="padding-left:32px;" />
         </div>
       </div>
 
       <div>
-        <div class="section-label" style="margin-bottom:8px;">🎨 Color del radio</div>
+        <div class="section-label" style="margin-bottom:8px;">🎨 Color</div>
         <div class="swatch-row" id="colorPicker">
           <div class="color-swatch active" data-color="#00e5a0" style="background:#00e5a0;"></div>
           <div class="color-swatch" data-color="#0099ff" style="background:#0099ff;"></div>
@@ -624,263 +437,241 @@
         </div>
       </div>
 
-      <div class="status loading" id="statusLoading">
-        <div class="spinner"></div><span>Buscando ubicación…</span>
-      </div>
-      <div class="status error" id="statusError">
-        <span>⚠️</span><span id="errorMsg">No se encontró.</span>
-      </div>
+      <div class="status loading" id="statusLoading"><div class="spinner"></div><span>Buscando ubicación…</span></div>
+      <div class="status error" id="statusError"><span>⚠️</span><span id="errorMsg"></span></div>
 
       <button class="btn-add" id="addBtn">＋ Agregar al mapa</button>
     </div>
 
     <div class="list-header">
       <div class="list-header-left">
-        <span class="section-label" style="margin:0;">Ubicaciones activas</span>
+        <span class="section-label">Ubicaciones</span>
         <span class="loc-count" id="locCount">0</span>
       </div>
       <button class="btn-clear" id="clearAllBtn">Limpiar todo</button>
     </div>
 
     <div class="locations-list" id="locationsList">
-      <div class="empty-state" id="emptyState">
-        <div class="e-ico">🗺️</div>
-        <div>Aún no hay ubicaciones.<br>Agrega la primera arriba.</div>
-      </div>
+      <div class="empty-state" id="emptyState"><div class="e-ico">🗺️</div><div>Aún no hay ubicaciones.</div></div>
     </div>
-
-    <div class="sidebar-footer">OpenStreetMap · Nominatim · Leaflet.js</div>
+    <div class="sidebar-footer">OpenStreetMap · Nominatim · Leaflet</div>
   </aside>
 
-  <!-- ═══ MAP ═══ -->
   <div class="map-wrap">
     <div id="map"></div>
     <button class="btn-fit" id="fitAllBtn">🗺️ Ver todo</button>
   </div>
 
   <button class="sheet-toggle" id="sheetToggle">☰ Panel <span id="toggleBadge">0</span></button>
+  <div class="mode-indicator" id="modeIndicator">📍 Toca el mapa para seleccionar ubicación</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
   (function(){
     "use strict";
 
-    /* ═══════════════════════ MAP ═══════════════════════ */
+    // MAP
     const map = L.map('map', { center: [20, 0], zoom: 2, zoomControl: true });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors', maxZoom: 19
+      attribution: '© OpenStreetMap', maxZoom: 19
     }).addTo(map);
 
-    /* ═══════════════════════ MOBILE SHEET ═══════════════════════ */
-    const sidebar     = document.getElementById('sidebar');
+    // Mobile sheet
+    const sidebar = document.getElementById('sidebar');
     const sheetHandle = document.getElementById('sheetHandle');
     const sheetToggle = document.getElementById('sheetToggle');
-    const toggleBadge = document.getElementById('toggleBadge');
-    const locationInput = document.getElementById('locationInput');
-
     const isMobile = () => window.innerWidth < 768;
     let sheetExpanded = true;
 
     function setSheet(expanded) {
       sheetExpanded = expanded;
-      sidebar.classList.toggle('expanded',  expanded);
+      sidebar.classList.toggle('expanded', expanded);
       sidebar.classList.toggle('collapsed', !expanded);
       sheetToggle.innerHTML = expanded ? '✕ Cerrar' : `☰ Panel <span>${locations.length}</span>`;
       setTimeout(() => map.invalidateSize(), 350);
     }
 
-    function updateToggleBadge() {
-      if (isMobile()) {
-        const badgeSpan = document.querySelector('#sheetToggle span');
-        if (badgeSpan) badgeSpan.textContent = locations.length;
-        else sheetToggle.innerHTML = sheetExpanded ? '✕ Cerrar' : `☰ Panel <span>${locations.length}</span>`;
-      }
-    }
-
     function initMobileSheet() {
-      if (isMobile()) {
-        setSheet(true);
-      } else {
-        sidebar.classList.remove('collapsed','expanded');
-      }
+      if (isMobile()) setSheet(true);
+      else sidebar.classList.remove('collapsed','expanded');
     }
     initMobileSheet();
     window.addEventListener('resize', initMobileSheet);
 
     sheetToggle.addEventListener('click', () => setSheet(!sheetExpanded));
-
     let touchStartY = 0;
-    sheetHandle.addEventListener('touchstart', e => {
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-    sheetHandle.addEventListener('touchend', e => {
-      const dy = touchStartY - e.changedTouches[0].clientY;
-      if (Math.abs(dy) > 30) setSheet(dy > 0);
-    }, { passive: true });
+    sheetHandle.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+    sheetHandle.addEventListener('touchend', e => { if (Math.abs(touchStartY - e.changedTouches[0].clientY) > 30) setSheet(touchStartY > e.changedTouches[0].clientY); });
     sheetHandle.addEventListener('click', () => setSheet(!sheetExpanded));
 
-    document.getElementById('map').addEventListener('click', () => {
-      if (isMobile() && sheetExpanded) setSheet(false);
-    });
-
-    // Scroll suave al input cuando recibe foco (para evitar que el teclado lo tape)
-    if (isMobile()) {
-      locationInput.addEventListener('focus', () => {
-        setTimeout(() => {
-          locationInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-      });
-    }
-
-    /* ═══════════════════════ STATE ═══════════════════════ */
+    // State
     const COLORS = ['#00e5a0','#0099ff','#ff4d6d','#ffd166','#c77dff','#ff9f1c','#00c8ff','#ff6b6b'];
-    let locations     = [];
-    let idCounter     = 0;
+    let locations = [];
+    let idCounter = 0;
     let selectedColor = '#00e5a0';
     let debounceTimer = null;
+    let mapSelectMode = false;
+    let tempMarker = null;
+    const modeIndicator = document.getElementById('modeIndicator');
 
+    // DOM elements
+    const locationInput = document.getElementById('locationInput');
     const suggestionsEl = document.getElementById('suggestions');
-    const radiusInput   = document.getElementById('radiusInput');
-    const unitSelect    = document.getElementById('unitSelect');
-    const addBtn        = document.getElementById('addBtn');
+    const radiusInput = document.getElementById('radiusInput');
+    const unitSelect = document.getElementById('unitSelect');
+    const addBtn = document.getElementById('addBtn');
     const statusLoading = document.getElementById('statusLoading');
-    const statusError   = document.getElementById('statusError');
+    const statusError = document.getElementById('statusError');
     const locationsList = document.getElementById('locationsList');
-    const emptyState    = document.getElementById('emptyState');
-    const locCount      = document.getElementById('locCount');
-    const clearAllBtn   = document.getElementById('clearAllBtn');
-    const fitAllBtn     = document.getElementById('fitAllBtn');
-    const colorPicker   = document.getElementById('colorPicker');
+    const emptyState = document.getElementById('emptyState');
+    const locCount = document.getElementById('locCount');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const fitAllBtn = document.getElementById('fitAllBtn');
+    const colorPicker = document.getElementById('colorPicker');
+    const mapSelectBtn = document.getElementById('mapSelectBtn');
 
-    /* ═══════════════════════ HELPERS ═══════════════════════ */
-    function toMeters(v, unit) {
-      if (unit === 'km') return v * 1000;
-      if (unit === 'mi') return v * 1609.344;
-      return v;
-    }
-    function areaKm2(m) { const r = m/1000; return (Math.PI*r*r).toFixed(2); }
+    // Helpers
+    function toMeters(v, u) { return u==='km'? v*1000 : u==='mi'? v*1609.344 : v; }
+    function areaKm2(m) { return (Math.PI*(m/1000)**2).toFixed(2); }
     function setStatus(s) {
       statusLoading.style.display = 'none';
-      statusError.style.display   = 'none';
-      if (s === 'loading') statusLoading.style.display = 'flex';
-      if (s === 'error')   statusError.style.display   = 'flex';
+      statusError.style.display = 'none';
+      if (s==='loading') statusLoading.style.display='flex';
+      else if (s==='error') statusError.style.display='flex';
     }
-    function uid()        { return ++idCounter; }
     function shortName(n) { return n.split(', ').slice(0,2).join(', '); }
-    function fmtR(r, u)   { return `${parseFloat(r).toFixed(1)} ${u}`; }
-    function autoColor()  {
-      const used = locations.map(l => l.color);
-      return COLORS.find(c => !used.includes(c)) || COLORS[locations.length % COLORS.length];
-    }
+    function fmtR(r,u) { return `${parseFloat(r).toFixed(1)} ${u}`; }
+    function autoColor() { const used=locations.map(l=>l.color); return COLORS.find(c=>!used.includes(c))||COLORS[locations.length%COLORS.length]; }
 
-    /* ═══════════════════════ COLOR PICKER ═══════════════════════ */
+    // Color picker
     colorPicker.querySelectorAll('.color-swatch').forEach(sw => {
       sw.addEventListener('click', () => {
-        colorPicker.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+        colorPicker.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
         sw.classList.add('active');
         selectedColor = sw.dataset.color;
       });
     });
+    function preselectColor() { const c=autoColor(); selectedColor=c; colorPicker.querySelectorAll('.color-swatch').forEach(sw=>sw.classList.toggle('active', sw.dataset.color===c)); }
 
-    function preselectColor() {
-      const c = autoColor();
-      selectedColor = c;
-      colorPicker.querySelectorAll('.color-swatch').forEach(sw =>
-        sw.classList.toggle('active', sw.dataset.color === c));
+    // ========== MODO SELECCIÓN EN MAPA ==========
+    function enableMapSelectMode() {
+      mapSelectMode = true;
+      mapSelectBtn.textContent = '✕ Cancelar selección';
+      mapSelectBtn.style.background = '#2a2f3c';
+      modeIndicator.style.display = 'flex';
+      if (tempMarker) map.removeLayer(tempMarker);
+      map.getContainer().style.cursor = 'crosshair';
+      if (isMobile()) setSheet(false); // Cierra panel para ver mapa
     }
 
-    /* ═══════════════════════ AUTOCOMPLETE ═══════════════════════ */
+    function disableMapSelectMode() {
+      mapSelectMode = false;
+      mapSelectBtn.textContent = '📍 Elegir punto en el mapa';
+      mapSelectBtn.style.background = '';
+      modeIndicator.style.display = 'none';
+      map.getContainer().style.cursor = '';
+      if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+    }
+
+    mapSelectBtn.addEventListener('click', () => {
+      if (mapSelectMode) disableMapSelectMode();
+      else enableMapSelectMode();
+    });
+
+    // Manejar clic en mapa para selección
+    map.on('click', async (e) => {
+      if (!mapSelectMode) return;
+      const { lat, lng } = e.latlng;
+
+      // Mostrar marcador temporal
+      if (tempMarker) map.removeLayer(tempMarker);
+      tempMarker = L.marker([lat, lng], {
+        icon: L.divIcon({ className: 'temp-marker', html: '📍', iconSize: [24,24] })
+      }).addTo(map);
+
+      setStatus('loading');
+      try {
+        // Geocodificación inversa
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`
+        );
+        const data = await res.json();
+        const address = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        locationInput.value = address;
+        setStatus(null);
+      } catch {
+        locationInput.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        setStatus('error');
+        document.getElementById('errorMsg').textContent = 'No se pudo obtener dirección, usando coordenadas.';
+      } finally {
+        disableMapSelectMode();
+        if (isMobile()) setSheet(true); // Reabrir panel
+      }
+    });
+
+    // ========== BÚSQUEDA MEJORADA ==========
     locationInput.addEventListener('input', () => {
       clearTimeout(debounceTimer);
       const q = locationInput.value.trim();
       if (q.length < 3) { suggestionsEl.classList.remove('active'); return; }
-      debounceTimer = setTimeout(() => fetchSugg(q, suggestionsEl, r => {
-        locationInput.value = r.display_name;
-        suggestionsEl.classList.remove('active');
-      }), 400);
+      debounceTimer = setTimeout(() => fetchSugg(q), 400);
     });
 
-    document.addEventListener('click', e => {
-      if (!e.target.closest('.input-wrap')) suggestionsEl.classList.remove('active');
-    });
-
-    async function fetchSugg(q, box, onSel) {
+    async function fetchSugg(q) {
       try {
-        const res  = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`,
-          { headers: { 'Accept-Language': 'es' } }
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=6&accept-language=es`
         );
         const data = await res.json();
-        renderSugg(data, box, onSel);
-      } catch {}
+        renderSugg(data);
+      } catch { suggestionsEl.classList.remove('active'); }
     }
 
-    function renderSugg(results, box, onSel) {
-      box.innerHTML = '';
-      if (!results.length) { box.classList.remove('active'); return; }
+    function renderSugg(results) {
+      suggestionsEl.innerHTML = '';
+      if (!results.length) { suggestionsEl.classList.remove('active'); return; }
       results.forEach(r => {
         const el = document.createElement('div');
         el.className = 'suggestion-item';
-        const parts = r.display_name.split(', ');
-        el.innerHTML = `
-          <span style="color:var(--accent);font-size:16px;flex-shrink:0;">📍</span>
-          <div>
-            <div class="s-main">${parts.slice(0,2).join(', ')}</div>
-            ${parts.length > 2 ? `<div class="s-sub">${parts.slice(2).join(', ')}</div>` : ''}
-          </div>`;
-        el.addEventListener('click', () => { onSel(r); box.classList.remove('active'); });
-        box.appendChild(el);
+        const displayName = r.display_name;
+        el.innerHTML = `<span style="color:var(--accent);">📍</span><div><div class="s-main">${displayName.split(',').slice(0,3).join(', ')}</div><div class="s-sub">${displayName.split(',').slice(3).join(', ')}</div></div>`;
+        el.addEventListener('click', () => {
+          locationInput.value = displayName;
+          suggestionsEl.classList.remove('active');
+        });
+        suggestionsEl.appendChild(el);
       });
-      box.classList.add('active');
+      suggestionsEl.classList.add('active');
     }
 
-    /* ═══════════════════════ DRAW / REMOVE ═══════════════════════ */
+    document.addEventListener('click', e => { if (!e.target.closest('.input-wrap')) suggestionsEl.classList.remove('active'); });
+
+    // ========== DIBUJAR CAPAS ==========
     function drawLayer(loc) {
       if (loc.circle) map.removeLayer(loc.circle);
       if (loc.marker) map.removeLayer(loc.marker);
       if (!loc.visible) return;
-
       const rm = toMeters(parseFloat(loc.radius), loc.unit);
-      loc.circle = L.circle([loc.lat, loc.lng], {
-        radius: rm, color: loc.color, fillColor: loc.color,
-        fillOpacity: 0.12, weight: 2.5, dashArray: '6 4'
-      }).addTo(map);
-
-      loc.marker = L.circleMarker([loc.lat, loc.lng], {
-        radius: 8, color: loc.color, fillColor: loc.color, fillOpacity: 1, weight: 2.5
-      }).addTo(map);
-
-      loc.marker.bindPopup(`
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;">
-          <span style="width:10px;height:10px;border-radius:50%;background:${loc.color};display:inline-block;"></span>
-          <strong style="font-size:14px;">${shortName(loc.name)}</strong>
-        </div>
-        <div style="font-size:12px;color:var(--muted);">Radio · ${fmtR(loc.radius, loc.unit)}</div>
-        <div style="font-size:12px;color:var(--muted);">Área · ${areaKm2(rm)} km²</div>
-      `, { maxWidth: 260 });
+      loc.circle = L.circle([loc.lat, loc.lng], { radius: rm, color: loc.color, fillColor: loc.color, fillOpacity: 0.12, weight: 2.5, dashArray: '6 4' }).addTo(map);
+      loc.marker = L.circleMarker([loc.lat, loc.lng], { radius: 8, color: loc.color, fillColor: loc.color, fillOpacity: 1, weight: 2.5 }).addTo(map);
+      loc.marker.bindPopup(`<div style="display:flex;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:${loc.color};"></span><strong>${shortName(loc.name)}</strong></div><div style="font-size:12px;">Radio: ${fmtR(loc.radius,loc.unit)} · Área: ${areaKm2(rm)} km²</div>`);
     }
 
-    function removeLayer(loc) {
-      if (loc.circle) { map.removeLayer(loc.circle); loc.circle = null; }
-      if (loc.marker) { map.removeLayer(loc.marker); loc.marker = null; }
-    }
+    function removeLayer(loc) { if(loc.circle) map.removeLayer(loc.circle); if(loc.marker) map.removeLayer(loc.marker); }
 
     function fitAll() {
-      const v = locations.filter(l => l.visible && l.circle);
-      if (!v.length) return;
-      const b = v.map(l => l.circle.getBounds()).reduce((a, c) => a.extend(c));
-      map.fitBounds(b, { padding: [70, 70] });
+      const visible = locations.filter(l=>l.visible && l.circle);
+      if (!visible.length) return;
+      const bounds = visible.map(l=>l.circle.getBounds()).reduce((a,b)=>a.extend(b));
+      map.fitBounds(bounds, { padding: [70,70] });
     }
 
-    /* ═══════════════════════ RENDER LIST ═══════════════════════ */
+    // ========== LISTA ==========
     function renderList() {
       locCount.textContent = locations.length;
       emptyState.style.display = locations.length ? 'none' : 'flex';
-      locationsList.querySelectorAll('.loc-card').forEach(card => {
-        if (!locations.find(l => l.id == card.dataset.id)) card.remove();
-      });
+      locationsList.querySelectorAll('.loc-card').forEach(c=>{ if(!locations.find(l=>l.id==c.dataset.id)) c.remove(); });
       locations.forEach(loc => {
         let card = locationsList.querySelector(`.loc-card[data-id="${loc.id}"]`);
         if (!card) { card = buildCard(loc); locationsList.insertBefore(card, emptyState); }
@@ -890,161 +681,67 @@
     }
 
     function buildCard(loc) {
-      const card = document.createElement('div');
-      card.className = 'loc-card';
-      card.dataset.id = loc.id;
-      card.innerHTML = `
-        <div class="loc-card-header">
-          <span class="loc-dot"></span>
-          <span class="loc-name"></span>
-          <span class="loc-badge"></span>
-          <div class="loc-actions">
-            <button class="loc-btn toggle-btn" title="Mostrar/Ocultar">👁️</button>
-            <button class="loc-btn focus-btn"  title="Centrar">🎯</button>
-            <button class="loc-btn delete"     title="Eliminar">✕</button>
-          </div>
-        </div>
-        <div class="loc-body">
-          <div class="loc-edit-row">
-            <select class="loc-unit-sel">
-              <option value="km">Kilómetros</option>
-              <option value="mi">Millas</option>
-              <option value="m">Metros</option>
-            </select>
-            <input type="number" class="loc-radius-inp" min="0.01" step="0.1" inputmode="decimal" />
-          </div>
-          <div class="loc-color-label">Color</div>
-          <div class="loc-color-row"></div>
-        </div>`;
+      const card = document.createElement('div'); card.className='loc-card'; card.dataset.id=loc.id;
+      card.innerHTML = `<div class="loc-card-header"><span class="loc-dot"></span><span class="loc-name"></span><span class="loc-badge"></span><div class="loc-actions"><button class="loc-btn toggle-btn">👁️</button><button class="loc-btn focus-btn">🎯</button><button class="loc-btn delete">✕</button></div></div><div class="loc-body"><div class="loc-edit-row"><select class="loc-unit-sel"><option value="km">km</option><option value="mi">mi</option><option value="m">m</option></select><input type="number" class="loc-radius-inp" min="0.01" step="0.1"></div><div class="loc-color-label">Color</div><div class="loc-color-row"></div></div>`;
 
       const colorRow = card.querySelector('.loc-color-row');
-      COLORS.forEach(c => {
-        const sw = document.createElement('div');
-        sw.className = 'loc-swatch';
-        sw.dataset.color = c; sw.style.background = c;
-        sw.addEventListener('click', () => {
-          colorRow.querySelectorAll('.loc-swatch').forEach(s => s.classList.remove('active'));
-          sw.classList.add('active');
-          loc.color = c; drawLayer(loc); syncCard(card, loc);
-        });
-        colorRow.appendChild(sw);
-      });
+      COLORS.forEach(c => { const sw=document.createElement('div'); sw.className='loc-swatch'; sw.dataset.color=c; sw.style.background=c; sw.addEventListener('click',()=>{ colorRow.querySelectorAll('.loc-swatch').forEach(s=>s.classList.remove('active')); sw.classList.add('active'); loc.color=c; drawLayer(loc); syncCard(card,loc); }); colorRow.appendChild(sw); });
 
-      card.querySelector('.loc-card-header').addEventListener('click', e => {
-        if (e.target.closest('.loc-actions')) return;
-        card.querySelector('.loc-body').classList.toggle('open');
-      });
-
-      card.querySelector('.toggle-btn').addEventListener('click', e => {
-        e.stopPropagation();
-        loc.visible = !loc.visible; drawLayer(loc); syncCard(card, loc);
-      });
-
-      card.querySelector('.focus-btn').addEventListener('click', e => {
-        e.stopPropagation();
-        if (loc.circle) map.fitBounds(loc.circle.getBounds(), { padding: [80,80] });
-        if (loc.marker) loc.marker.openPopup();
-        if (isMobile()) setSheet(false);
-      });
-
-      card.querySelector('.delete').addEventListener('click', e => {
-        e.stopPropagation();
-        removeLayer(loc);
-        locations = locations.filter(l => l.id !== loc.id);
-        card.style.transition = 'opacity .18s, transform .18s';
-        card.style.opacity = '0'; card.style.transform = 'translateY(-4px)';
-        setTimeout(() => { card.remove(); renderList(); }, 190);
-      });
-
-      card.querySelector('.loc-radius-inp').addEventListener('input', function() {
-        loc.radius = parseFloat(this.value) || 0.1;
-        drawLayer(loc); syncCard(card, loc);
-      });
-
-      card.querySelector('.loc-unit-sel').addEventListener('change', function() {
-        loc.unit = this.value; drawLayer(loc); syncCard(card, loc);
-      });
-
+      card.querySelector('.loc-card-header').addEventListener('click', e => { if(!e.target.closest('.loc-actions')) card.querySelector('.loc-body').classList.toggle('open'); });
+      card.querySelector('.toggle-btn').addEventListener('click', e => { e.stopPropagation(); loc.visible=!loc.visible; drawLayer(loc); syncCard(card,loc); });
+      card.querySelector('.focus-btn').addEventListener('click', e => { e.stopPropagation(); if(loc.circle) map.fitBounds(loc.circle.getBounds(),{padding:[80,80]}); if(loc.marker) loc.marker.openPopup(); if(isMobile()) setSheet(false); });
+      card.querySelector('.delete').addEventListener('click', e => { e.stopPropagation(); removeLayer(loc); locations=locations.filter(l=>l.id!==loc.id); card.remove(); renderList(); });
+      card.querySelector('.loc-radius-inp').addEventListener('input', function(){ loc.radius=parseFloat(this.value)||0.1; drawLayer(loc); syncCard(card,loc); });
+      card.querySelector('.loc-unit-sel').addEventListener('change', function(){ loc.unit=this.value; drawLayer(loc); syncCard(card,loc); });
       return card;
     }
 
     function syncCard(card, loc) {
       card.querySelector('.loc-dot').style.background = loc.color;
       card.querySelector('.loc-name').textContent = shortName(loc.name);
-      const badge = card.querySelector('.loc-badge');
-      badge.textContent = fmtR(loc.radius, loc.unit);
-      badge.style.background = loc.color + '22';
-      badge.style.color = loc.color;
-      card.querySelector('.loc-unit-sel').value = loc.unit;
-      card.querySelector('.loc-radius-inp').value = loc.radius;
-      card.querySelectorAll('.loc-swatch').forEach(sw =>
-        sw.classList.toggle('active', sw.dataset.color === loc.color));
-      card.querySelector('.toggle-btn').style.opacity = loc.visible ? '1' : '0.4';
-      card.style.opacity = loc.visible ? '1' : '0.55';
+      const badge = card.querySelector('.loc-badge'); badge.textContent = fmtR(loc.radius,loc.unit); badge.style.background=loc.color+'22'; badge.style.color=loc.color;
+      card.querySelector('.loc-unit-sel').value=loc.unit;
+      card.querySelector('.loc-radius-inp').value=loc.radius;
+      card.querySelectorAll('.loc-swatch').forEach(sw=>sw.classList.toggle('active', sw.dataset.color===loc.color));
+      card.querySelector('.toggle-btn').style.opacity = loc.visible?'1':'0.4';
+      card.style.opacity = loc.visible?'1':'0.55';
     }
 
-    /* ═══════════════════════ ADD ═══════════════════════ */
+    function updateToggleBadge() { if(isMobile()){ const badge=document.querySelector('#sheetToggle span'); if(badge) badge.textContent=locations.length; } }
+
+    // ========== AGREGAR ==========
     addBtn.addEventListener('click', async () => {
       const q = locationInput.value.trim();
-      if (!q) { document.getElementById('errorMsg').textContent = 'Escribe una dirección.'; setStatus('error'); return; }
-
-      setStatus('loading'); addBtn.disabled = true;
+      if (!q) { document.getElementById('errorMsg').textContent='Escribe una dirección o selecciona en mapa.'; setStatus('error'); return; }
+      setStatus('loading'); addBtn.disabled=true;
       try {
-        const res  = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,
-          { headers: { 'Accept-Language': 'es' } }
-        );
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=1&accept-language=es`);
         const data = await res.json();
-        if (!data.length) throw new Error();
-
+        if (!data.length) throw new Error('Ubicación no encontrada');
         const loc = {
-          id: uid(),
+          id: ++idCounter,
           name: data[0].display_name,
-          lat:  parseFloat(data[0].lat),
-          lng:  parseFloat(data[0].lon),
-          radius: parseFloat(radiusInput.value) || 1,
-          unit:  unitSelect.value,
-          color: selectedColor,
-          visible: true,
-          circle: null, marker: null
+          lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon),
+          radius: parseFloat(radiusInput.value)||1, unit: unitSelect.value,
+          color: selectedColor, visible: true, circle: null, marker: null
         };
-
         locations.push(loc);
-        drawLayer(loc);
-        renderList();
-        setStatus(null);
-        locationInput.value = '';
-        fitAll();
-        preselectColor();
-
-        if (isMobile()) setTimeout(() => setSheet(false), 300);
-      } catch {
-        document.getElementById('errorMsg').textContent = 'No se encontró. Intenta con más detalle.';
+        drawLayer(loc); renderList(); setStatus(null); locationInput.value=''; fitAll(); preselectColor();
+        if(isMobile()) setSheet(false);
+      } catch(e) {
+        document.getElementById('errorMsg').textContent = e.message || 'Error al buscar.';
         setStatus('error');
-      } finally {
-        addBtn.disabled = false;
-      }
+      } finally { addBtn.disabled=false; }
     });
 
-    locationInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { locationInput.blur(); addBtn.click(); }
-    });
+    locationInput.addEventListener('keydown', e => { if(e.key==='Enter'){ locationInput.blur(); addBtn.click(); } });
+    clearAllBtn.addEventListener('click', ()=>{ locations.forEach(l=>removeLayer(l)); locations=[]; locationsList.querySelectorAll('.loc-card').forEach(c=>c.remove()); renderList(); });
+    fitAllBtn.addEventListener('click', ()=>{ fitAll(); if(isMobile()) setSheet(false); });
 
-    clearAllBtn.addEventListener('click', () => {
-      locations.forEach(l => removeLayer(l));
-      locations = [];
-      locationsList.querySelectorAll('.loc-card').forEach(c => c.remove());
-      renderList();
-    });
+    // Auto scroll en input
+    if(isMobile()) locationInput.addEventListener('focus', ()=>setTimeout(()=>locationInput.scrollIntoView({behavior:'smooth',block:'center'}),100));
 
-    fitAllBtn.addEventListener('click', () => {
-      fitAll();
-      if (isMobile()) setSheet(false);
-    });
-
-    renderList();
-    preselectColor();
-    updateToggleBadge();
+    renderList(); preselectColor();
   })();
 </script>
 </body>
