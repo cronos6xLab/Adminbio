@@ -1,2691 +1,664 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Cronos6x | Panel de Control</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Panel de control para página de enlaces" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+  <title>Radio Explorer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --bg: #050816;
-      --bg-alt: #0b1020;
-      --accent: #6366f1;
-      --accent-soft: rgba(99, 102, 241, 0.25);
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --card: rgba(15, 23, 42, 0.85);
-      --danger: #f97373;
-      --success: #22c55e;
-      --radius-lg: 22px;
-      --radius-md: 14px;
-      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.7);
-      --blur: 22px;
-      --transition: 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+```
+:root {
+  --bg: #0a0c10;
+  --panel: #111318;
+  --border: #1e2128;
+  --accent: #00e5a0;
+  --accent2: #0099ff;
+  --text: #f0f2f5;
+  --muted: #6b7280;
+}
+
+html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+
+.app { display: grid; grid-template-columns: 400px 1fr; height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative; z-index: 10;
+}
+.sidebar::before {
+  content: ''; position: absolute; top: -80px; left: -80px;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, rgba(0,229,160,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Header */
+.header { padding: 22px 22px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.logo { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.5px; }
+.logo-text span { color: var(--accent); }
+.tagline { font-size: 11px; color: var(--muted); letter-spacing: 0.4px; }
+
+/* Add form */
+.add-form { padding: 18px 22px; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.section-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--muted);
+}
+
+.field-group { display: flex; flex-direction: column; gap: 5px; }
+
+.input-wrap { position: relative; }
+.input-wrap .icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); font-size: 13px; pointer-events: none;
+}
+
+input[type="text"], input[type="number"], select {
+  width: 100%; background: #161920; border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; padding: 10px 12px 10px 34px; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input[type="text"]:focus, input[type="number"]:focus, select:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,160,0.07);
+}
+select { appearance: none; cursor: pointer; }
+
+/* Autocomplete */
+.suggestions-box {
+  position: absolute; top: calc(100% + 5px); left: 0; right: 0;
+  background: #161920; border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; z-index: 9999; display: none;
+  box-shadow: 0 14px 36px rgba(0,0,0,0.6);
+}
+.suggestions-box.active { display: block; }
+.suggestion-item {
+  padding: 10px 14px; font-size: 12px; color: var(--text); cursor: pointer;
+  transition: background 0.13s; display: flex; align-items: flex-start; gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background: rgba(0,229,160,0.05); }
+.s-main { font-weight: 500; line-height: 1.3; }
+.s-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+/* Controls row */
+.row-controls { display: grid; grid-template-columns: 1fr 76px; gap: 8px; }
+
+/* Color swatches */
+.swatch-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.color-swatch {
+  width: 22px; height: 22px; border-radius: 6px; cursor: pointer;
+  border: 2px solid transparent; transition: transform 0.13s, border-color 0.13s;
+}
+.color-swatch:hover { transform: scale(1.18); }
+.color-swatch.active { border-color: white; }
+
+/* Status */
+.status { font-size: 11px; padding: 8px 12px; border-radius: 8px; display: none; align-items: center; gap: 7px; }
+.status.loading { display: flex; background: rgba(0,153,255,0.08); color: var(--accent2); border: 1px solid rgba(0,153,255,0.13); }
+.status.error   { display: flex; background: rgba(255,80,80,0.08);  color: #ff7070;     border: 1px solid rgba(255,80,80,0.13); }
+.spinner { width: 12px; height: 12px; border: 2px solid rgba(0,153,255,0.3); border-top-color: var(--accent2); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Add button */
+.btn-add {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #0a0c10; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+  border: none; border-radius: 10px; padding: 11px; cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-add:active { transform: translateY(0); }
+.btn-add:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+/* ── Locations list ── */
+.locations-header {
+  padding: 12px 22px 8px;
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.locations-count {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+  background: rgba(0,229,160,0.12); color: var(--accent);
+  border-radius: 20px; padding: 2px 9px; margin-left: 6px;
+}
+.btn-clear-all {
+  font-size: 11px; color: var(--muted); background: none; border: none;
+  cursor: pointer; padding: 4px 8px; border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.btn-clear-all:hover { color: #ff7070; background: rgba(255,80,80,0.07); }
+
+.locations-list {
+  flex: 1; overflow-y: auto; padding: 0 22px 14px; display: flex; flex-direction: column; gap: 7px;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 30px 0; color: var(--muted); font-size: 12px; text-align: center;
+}
+.empty-state .e-icon { font-size: 28px; opacity: 0.35; }
+
+/* Location card */
+.loc-card {
+  background: #161920; border: 1px solid var(--border); border-radius: 11px;
+  overflow: hidden; transition: border-color 0.2s;
+  animation: slideIn 0.22s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+.loc-card:hover { border-color: #272c36; }
+
+.loc-card-header {
+  display: flex; align-items: center; gap: 9px; padding: 10px 12px;
+  cursor: pointer; user-select: none;
+}
+.loc-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.loc-name { font-size: 12px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loc-badge {
+  font-size: 10px; font-family: 'Syne', sans-serif; font-weight: 700;
+  padding: 2px 7px; border-radius: 20px; flex-shrink: 0;
+}
+
+.loc-actions { display: flex; gap: 3px; flex-shrink: 0; }
+.loc-btn {
+  width: 24px; height: 24px; border-radius: 6px; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 11px;
+  transition: background 0.13s; background: transparent; color: var(--muted);
+}
+.loc-btn:hover { background: rgba(255,255,255,0.06); }
+.loc-btn.delete:hover { background: rgba(255,80,80,0.1); color: #ff7070; }
+.loc-btn.focus-btn:hover { background: rgba(0,229,160,0.1); color: var(--accent); }
+
+.loc-body { padding: 0 12px 10px; display: none; border-top: 1px solid var(--border); margin-top: 2px; padding-top: 10px; }
+.loc-body.open { display: block; }
+
+.loc-edit-row { display: grid; grid-template-columns: 1fr 70px; gap: 6px; margin-bottom: 8px; }
+.loc-edit-row input, .loc-edit-row select { font-size: 12px; padding: 7px 10px; }
+.loc-edit-row input { padding-left: 10px; }
+
+.loc-color-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.loc-swatch {
+  width: 20px; height: 20px; border-radius: 5px; cursor: pointer;
+  border: 2px solid transparent; transition: transform 0.12s, border-color 0.12s;
+}
+.loc-swatch:hover { transform: scale(1.2); }
+.loc-swatch.active { border-color: white; }
+
+/* Footer */
+.sidebar-footer { padding: 10px 22px; border-top: 1px solid var(--border); font-size: 10px; color: var(--muted); text-align: center; flex-shrink: 0; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Map ── */
+#map { width: 100%; height: 100%; background: #0d0f14; }
+.leaflet-container { background: #0d0f14; font-family: 'DM Sans', sans-serif; }
+.leaflet-tile { filter: brightness(0.85) saturate(0.6) hue-rotate(180deg) invert(1); }
+.leaflet-control-zoom a { background: var(--panel) !important; color: var(--text) !important; border-color: var(--border) !important; }
+.leaflet-control-attribution { background: rgba(10,12,16,0.7) !important; color: var(--muted) !important; font-size: 9px !important; }
+.leaflet-control-attribution a { color: var(--accent) !important; }
+.leaflet-popup-content-wrapper { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+.leaflet-popup-tip { background: var(--panel); }
+.leaflet-popup-content { font-family: 'DM Sans', sans-serif; font-size: 12px; line-height: 1.5; margin: 10px 14px; }
+
+/* Fit-all button */
+.btn-fit {
+  position: absolute; bottom: 22px; right: 22px; z-index: 800;
+  background: var(--panel); border: 1px solid var(--border); color: var(--text);
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+  padding: 9px 14px; border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.btn-fit:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 700px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .sidebar { max-height: 55vh; overflow-y: auto; }
+  html, body { overflow: auto; }
+}
+```
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: stretch;
-      justify-content: center;
-      padding: 20px;
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 1100px;
-      display: grid;
-      grid-template-columns: minmax(0, 3fr) minmax(0, 2.3fr);
-      gap: 24px;
-      z-index: 1;
-    }
-
-    @media (max-width: 860px) {
-      .app {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .card {
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.82));
-      border-radius: 28px;
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      backdrop-filter: blur(var(--blur));
-      padding: 20px 20px 16px;
-      position: relative;
-      overflow: hidden;
-      transition: transform var(--transition), box-shadow var(--transition);
-    }
-
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 25px 50px rgba(15, 23, 42, 0.8);
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: -40%;
-      background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.16), transparent 55%),
-                  radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.18), transparent 55%);
-      opacity: 0.9;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .card-inner {
-      position: relative;
-      z-index: 1;
-    }
-
-    .screen-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.17em;
-      color: var(--muted);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .screen-label-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(34, 197, 94, 0.9);
-      box-shadow: 0 0 12px rgba(34, 197, 94, 0.7);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
-    }
-
-    .screen-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
-    .screen-title-group h1 {
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .screen-title-group h1 span.highlight {
-      background: linear-gradient(120deg, #eab308, #22c55e, #2dd4bf);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      font-weight: 700;
-    }
-
-    .screen-subtitle {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .pill {
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 11px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: radial-gradient(circle at top, rgba(34, 197, 94, 0.2), rgba(15, 23, 42, 0.8));
-      border: 1px solid rgba(34, 197, 94, 0.35);
-      color: #bbf7d0;
-    }
-
-    .pill-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: rgba(34, 197, 94, 0.9);
-    }
-
-    .device {
-      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.98));
-      border-radius: 40px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      padding: 14px;
-      max-width: 380px;
-      margin: 4px auto 6px;
-      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.9);
-      position: relative;
-    }
-
-    .device-notch {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 40%;
-      height: 16px;
-      background: #020617;
-      border-radius: 0 0 14px 14px;
-    }
-
-    .device-inner {
-      background: radial-gradient(circle at top, #020617 0, #020617 40%, #020617 100%);
-      border-radius: 26px;
-      padding: 22px 16px 18px;
-      border: 1px solid rgba(30, 64, 175, 0.45);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .device-inner::before {
-      content: "";
-      position: absolute;
-      inset: -35%;
-      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.18), transparent 55%),
-                  radial-gradient(circle at bottom, rgba(236, 72, 153, 0.18), transparent 55%);
-      opacity: 0.9;
-      pointer-events: none;
-    }
-
-    .device-content {
-      position: relative;
-      z-index: 1;
-    }
-
-    .profile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-
-    .avatar {
-      width: 70px;
-      height: 70px;
-      border-radius: 24px;
-      background: radial-gradient(circle at top, #f97316, #ea580c, #b91c1c);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      box-shadow: 0 15px 35px rgba(249, 115, 22, 0.65);
-      border: 3px solid rgba(15, 23, 42, 0.9);
-      transition: transform var(--transition);
-      cursor: pointer;
-    }
-
-    .avatar:hover {
-      transform: scale(1.05);
-    }
-
-    .name {
-      font-weight: 600;
-      font-size: 17px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .username {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .bio {
-      font-size: 12px;
-      color: #e5e7eb;
-      max-width: 260px;
-      line-height: 1.4;
-    }
-
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 6px;
-      margin: 8px 0 10px;
-    }
-
-    .tag {
-      font-size: 10px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      color: var(--muted);
-      transition: all var(--transition);
-    }
-
-    .tag:hover {
-      border-color: var(--accent);
-      color: var(--text);
-      transform: translateY(-1px);
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-
-    .stat {
-      background: rgba(15, 23, 42, 0.88);
-      border-radius: 14px;
-      padding: 6px 8px;
-      border: 1px solid rgba(51, 65, 85, 0.9);
-      text-align: center;
-      transition: all var(--transition);
-    }
-
-    .stat:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
-
-    .stat-label {
-      font-size: 9px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .stat-value {
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .links {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .link-btn {
-      border-radius: 999px;
-      padding: 9px 11px;
-      border: 1px solid rgba(148, 163, 184, 0.45);
-      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.25), rgba(15, 23, 42, 0.95));
-      color: var(--text);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 13px;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease,
-                  background 0.12s ease;
-      cursor: pointer;
-    }
-
-    .link-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 25px rgba(15, 23, 42, 0.85);
-      border-color: rgba(129, 140, 248, 0.9);
-      background: radial-gradient(circle at top left, rgba(129, 140, 248, 0.35), rgba(15, 23, 42, 0.98));
-    }
-
-    .link-main {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-
-    .link-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(148, 163, 184, 0.6);
-    }
-
-    .link-text {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .link-title {
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .link-subtitle {
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .link-meta {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
-
-    .link-clicks {
-      font-size: 11px;
-      color: #a5b4fc;
-    }
-
-    .link-cta {
-      font-size: 10px;
-      color: #22c55e;
-    }
-
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 4px;
-    }
-
-    .socials {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .social-pill {
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.55);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      background: rgba(15, 23, 42, 0.92);
-      color: #e5e7eb;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all var(--transition);
-    }
-
-    .social-pill:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent);
-      background: rgba(15, 23, 42, 1);
-    }
-
-    .visit-pill {
-      font-size: 10px;
-      padding: 4px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      color: var(--muted);
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .visit-pill:hover {
-      border-color: var(--accent);
-      color: var(--text);
-    }
-
-    .designer {
-      font-size: 9px;
-      color: var(--muted);
-    }
-
-    .designer span {
-      color: #a5b4fc;
-    }
-
-    .panel {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-
-    .panel-title {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .panel-subtitle {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .chip {
-      font-size: 11px;
-      padding: 5px 9px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      color: var(--muted);
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .chip.active {
-      background: radial-gradient(circle at top left, rgba(129, 140, 248, 0.3), rgba(15, 23, 42, 0.95));
-      color: #e5e7eb;
-      border-color: rgba(129, 140, 248, 0.9);
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    @media (max-width: 480px) {
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .field label {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .input,
-    .textarea,
-    .select {
-      border-radius: 12px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      background: rgba(15, 23, 42, 0.95);
-      color: var(--text);
-      padding: 8px 9px;
-      font-family: inherit;
-      font-size: 12px;
-      outline: none;
-      transition: border-color var(--transition), box-shadow var(--transition),
-                  background var(--transition), transform var(--transition);
-    }
-
-    .input:focus,
-    .textarea:focus,
-    .select:focus {
-      border-color: rgba(129, 140, 248, 0.9);
-      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.6);
-      background: rgba(15, 23, 42, 1);
-      transform: translateY(-1px);
-    }
-
-    .textarea {
-      resize: vertical;
-      min-height: 56px;
-      max-height: 120px;
-    }
-
-    .select {
-      appearance: none;
-      background-image: linear-gradient(45deg, transparent 50%, #9ca3af 50%),
-                        linear-gradient(135deg, #9ca3af 50%, transparent 50%);
-      background-position: calc(100% - 14px) 11px, calc(100% - 9px) 11px;
-      background-size: 5px 5px, 5px 5px;
-      background-repeat: no-repeat;
-      padding-right: 24px;
-    }
-
-    .row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .row-between {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .toggle {
-      width: 36px;
-      height: 18px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      display: flex;
-      align-items: center;
-      padding: 2px;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .toggle-thumb {
-      width: 14px;
-      height: 14px;
-      border-radius: 999px;
-      background: rgba(148, 163, 184, 0.9);
-      transition: transform var(--transition), background var(--transition);
-    }
-
-    .toggle.on {
-      background: rgba(34, 197, 94, 0.12);
-      border-color: rgba(34, 197, 94, 0.9);
-    }
-
-    .toggle.on .toggle-thumb {
-      transform: translateX(16px);
-      background: #22c55e;
-    }
-
-    .btn {
-      border-radius: 999px;
-      padding: 8px 12px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      background: rgba(15, 23, 42, 0.98);
-      color: var(--text);
-      font-size: 12px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background var(--transition), border-color var(--transition),
-                  transform var(--transition), box-shadow var(--transition);
-    }
-
-    .btn-primary {
-      background: radial-gradient(circle at top left, #4f46e5, #7c3aed, #db2777);
-      border-color: rgba(191, 219, 254, 0.4);
-      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.75);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 18px 38px rgba(79, 70, 229, 0.9);
-    }
-
-    .btn-ghost {
-      background: rgba(15, 23, 42, 0.94);
-    }
-
-    .btn-ghost:hover {
-      background: rgba(15, 23, 42, 1);
-      transform: translateY(-1px);
-    }
-
-    .btn-icon {
-      font-size: 14px;
-    }
-
-    .link-list {
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 18px;
-      padding: 10px;
-      border: 1px solid rgba(51, 65, 85, 0.9);
-      max-height: 250px;
-      overflow: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .link-item-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 8px;
-      border-radius: 12px;
-      background: rgba(15, 23, 42, 0.94);
-      border: 1px solid rgba(51, 65, 85, 0.95);
-      transition: all var(--transition);
-    }
-
-    .link-item-row:hover {
-      border-color: rgba(148, 163, 184, 0.7);
-      transform: translateY(-1px);
-    }
-
-    .drag-handle {
-      cursor: grab;
-      font-size: 14px;
-      color: var(--muted);
-      padding: 0 4px;
-    }
-
-    .link-item-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .link-item-title {
-      font-size: 12px;
-    }
-
-    .link-item-url {
-      font-size: 10px;
-      color: var(--muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .link-item-meta {
-      font-size: 10px;
-      color: #a5b4fc;
-    }
-
-    .link-item-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .badge {
-      border-radius: 999px;
-      padding: 2px 6px;
-      font-size: 9px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      color: var(--muted);
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .badge.ready {
-      border-color: rgba(34, 197, 94, 0.9);
-      color: #bbf7d0;
-    }
-
-    .badge.off {
-      border-color: rgba(148, 163, 184, 0.7);
-      color: var(--muted);
-    }
-
-    .badge:hover {
-      transform: translateY(-1px);
-    }
-
-    .analytics-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .analytics-card {
-      border-radius: 14px;
-      padding: 8px 9px;
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid rgba(51, 65, 85, 0.95);
-      transition: all var(--transition);
-    }
-
-    .analytics-card:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
-
-    .analytics-label {
-      font-size: 9px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .analytics-value {
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .analytics-sub {
-      font-size: 10px;
-      color: #22c55e;
-    }
-
-    .pill-soft {
-      font-size: 10px;
-      padding: 3px 6px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      color: var(--muted);
-    }
-
-    .code-box {
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 14px;
-      border: 1px solid rgba(51, 65, 85, 0.95);
-      padding: 8px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-                   "Courier New", monospace;
-      font-size: 11px;
-      color: #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      transition: all var(--transition);
-    }
-
-    .code-box:hover {
-      border-color: var(--accent);
-    }
-
-    .code-box span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .code-box button {
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.98);
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      color: #e5e7eb;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .code-box button:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
-      background: rgba(15, 23, 42, 0.98);
-      border-radius: 999px;
-      border: 1px solid rgba(34, 197, 94, 0.8);
-      color: #bbf7d0;
-      padding: 7px 12px;
-      font-size: 12px;
-      display: none;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.9);
-      z-index: 50;
-      animation: slideIn 0.3s ease;
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    .toast-icon {
-      font-size: 13px;
-    }
-
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-    }
-    
-    .modal-content {
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      max-width: 400px;
-      width: 90%;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      box-shadow: var(--shadow-soft);
-    }
-    
-    .close-modal {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-size: 20px;
-      cursor: pointer;
-    }
-    
-    .qr-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      margin-top: 16px;
-      padding: 16px;
-      border-radius: var(--radius-md);
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-    }
-    
-    .qr-toggle {
-      font-size: 11px;
-      color: var(--accent);
-      cursor: pointer;
-      text-decoration: underline;
-      margin-top: 8px;
-    }
-    
-    .dragging {
-      opacity: 0.5;
-      border-color: var(--accent);
-    }
-    
-    .theme-toggle {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 10;
-      font-size: 18px;
-      transition: all var(--transition);
-    }
-    
-    .theme-toggle:hover {
-      transform: scale(1.1);
-      border-color: var(--accent);
-    }
-    
-    .help-text {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 4px;
-      line-height: 1.3;
-    }
   </style>
 </head>
 <body>
-  <!-- Botón flotante para cambiar tema claro/oscuro -->
-  <div class="theme-toggle" id="theme-toggle">
-    <i class="fas fa-moon"></i>
-  </div>
-  
-  <!-- Modal para cambiar avatar -->
-  <div class="modal" id="avatar-modal">
-    <div class="modal-content">
-      <button class="close-modal" id="close-modal">&times;</button>
-      <h3 style="margin-bottom: 16px;">Cambiar Avatar</h3>
-      <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">
-        Selecciona un emoji o escribe tu propio texto/emoji:
-      </p>
-      <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 16px;">
-        <button class="emoji-option">😎</button>
-        <button class="emoji-option">🚀</button>
-        <button class="emoji-option">👑</button>
-        <button class="emoji-option">⚡</button>
-        <button class="emoji-option">💎</button>
-        <button class="emoji-option">🔥</button>
-        <button class="emoji-option">👾</button>
-        <button class="emoji-option">🤖</button>
-        <button class="emoji-option">🎯</button>
-        <button class="emoji-option">🧠</button>
-        <button class="emoji-option">💻</button>
-        <button class="emoji-option">📱</button>
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+
+  <aside class="sidebar">
+    <div class="header">
+      <div class="logo">
+        <div class="logo-icon">📍</div>
+        <div class="logo-text">Radio<span>Explorer</span></div>
       </div>
-      <input type="text" class="input" id="custom-emoji" placeholder="Personalizar..." style="width: 100%; margin-bottom: 16px;">
-      <button class="btn btn-primary" id="save-avatar" style="width: 100%;">Guardar Avatar</button>
+      <div class="tagline">Visualiza múltiples radios en el mapa a la vez</div>
+    </div>
+
+```
+<!-- Add form -->
+<div class="add-form">
+  <div class="section-title">➕ Agregar ubicación</div>
+
+  <div class="field-group">
+    <div class="input-wrap" style="position:relative;">
+      <span class="icon">🔍</span>
+      <input type="text" id="locationInput" placeholder="Dirección, ciudad, lugar…" autocomplete="off" />
+      <div class="suggestions-box" id="suggestions"></div>
     </div>
   </div>
 
-  <!-- Contenedor principal -->
-  <div class="app">
-    <!-- SECCIÓN 1: VISTA PREVIA -->
-    <section class="card">
-      <div class="card-inner">
-        <div class="screen-label">
-          <span class="screen-label-dot"></span>
-          Vista previa en vivo
-        </div>
-        <div class="screen-header">
-          <div class="screen-title-group">
-            <h1>
-              Página de
-              <span class="highlight">links</span>
-            </h1>
-            <div class="screen-subtitle">
-              Perfil público de @<span id="preview-username">Cronos6x</span>
-            </div>
-          </div>
-          <div class="pill">
-            <span class="pill-dot"></span>
-            <span id="preview-visits-badge">0 visitas</span>
-          </div>
-        </div>
-
-        <!-- Dispositivo simulado -->
-        <div class="device">
-          <div class="device-notch"></div>
-          <div class="device-inner">
-            <div class="device-content">
-              <div class="profile">
-                <div class="avatar" id="preview-avatar">⏳</div>
-                <div class="name">
-                  <span id="preview-name">Cronos</span>
-                </div>
-                <div class="username">@<span id="preview-username-2">Cronos6x</span></div>
-                <p class="bio" id="preview-bio">
-                  Creador digital. Experimentos, negocios y proyectos que no duermen.
-                </p>
-                <div class="tags" id="preview-tags">
-                  <span class="tag">🧪 Experimentos</span>
-                  <span class="tag">🚀 Proyectos</span>
-                  <span class="tag">🌙 Late Night Builder</span>
-                </div>
-              </div>
-
-              <div class="stats">
-                <div class="stat">
-                  <div class="stat-label">Visitas</div>
-                  <div class="stat-value" id="preview-total-views">0</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-label">Clicks</div>
-                  <div class="stat-value" id="preview-total-clicks">0</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-label">CTR</div>
-                  <div class="stat-value" id="preview-ctr">0%</div>
-                </div>
-              </div>
-
-              <div class="links" id="preview-links"></div>
-
-              <div class="footer">
-                <div class="socials" id="preview-socials"></div>
-                <div class="designer">
-                  hecho por <span>@Cronos6x</span>
-                </div>
-              </div>
-              
-              <div class="qr-container" id="qr-container" style="display: none;">
-                <div id="qr-code"></div>
-                <p style="font-size: 10px; color: var(--muted); text-align: center;">
-                  Escanea para visitar mi página
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:11px;color:#9ca3af;">
-          <span>Comparte tu link único con quien quieras.</span>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <span class="visit-pill" id="preview-link-text">public.html</span>
-            <span class="qr-toggle" id="toggle-qr">Mostrar QR</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECCIÓN 2: PANEL DE CONTROL -->
-    <section class="card">
-      <div class="card-inner panel">
-        <header class="panel-header">
-          <div>
-            <div class="panel-title">Panel de control</div>
-            <div class="panel-subtitle">
-              Edita tu perfil, enlaces, estilo y comparte.
-            </div>
-          </div>
-          <div class="chip-row">
-            <button class="chip active" data-theme="aura">Aura</button>
-            <button class="chip" data-theme="nebula">Nebula</button>
-            <button class="chip" data-theme="acid">Acid</button>
-            <button class="chip" data-theme="sunset">Sunset</button>
-          </div>
-        </header>
-
-        <!-- PERFIL -->
-        <div>
-          <div class="panel-subtitle" style="margin-bottom:6px;">Perfil</div>
-          <div class="form-grid">
-            <div class="field">
-              <label>Nombre</label>
-              <input class="input" id="input-name" value="Cronos" />
-            </div>
-            <div class="field">
-              <label>Usuario</label>
-              <input class="input" id="input-username" value="Cronos6x" />
-            </div>
-            <div class="field">
-              <label>Emoji / Avatar</label>
-              <div style="display: flex; gap: 8px;">
-                <input class="input" id="input-avatar" value="⏳" />
-                <button class="btn btn-ghost" id="btn-avatar-picker" style="padding: 8px;">
-                  <i class="fas fa-smile"></i>
-                </button>
-              </div>
-            </div>
-            <div class="field">
-              <label>Tags (separadas por coma)</label>
-              <input
-                class="input"
-                id="input-tags"
-                value="🧪 Experimentos, 🚀 Proyectos, 🌙 Late Night Builder"
-              />
-            </div>
-          </div>
-          <div class="field" style="margin-top:8px;">
-            <label>Biografía</label>
-            <textarea
-              class="textarea"
-              id="input-bio"
-            >Creador digital. Experimentos, negocios y proyectos que no duermen.</textarea>
-          </div>
-        </div>
-
-        <!-- ENLACES -->
-        <div>
-          <div class="row-between" style="margin-bottom:6px;">
-            <span class="panel-subtitle">Enlaces</span>
-            <button class="btn btn-primary" id="btn-add-link">
-              <span class="btn-icon">＋</span> Añadir enlace
-            </button>
-          </div>
-          <div class="form-grid" style="margin-bottom:8px;">
-            <div class="field">
-              <label>Título</label>
-              <input class="input" id="input-link-title" placeholder="Ej. AION Parfums" />
-            </div>
-            <div class="field">
-              <label>URL</label>
-              <input class="input" id="input-link-url" placeholder="https://..." />
-            </div>
-            <div class="field">
-              <label>Emoji / Icono</label>
-              <input class="input" id="input-link-icon" placeholder="🔥" />
-            </div>
-            <div class="field">
-              <label>Nota / Subtítulo</label>
-              <input class="input" id="input-link-sub" placeholder="Ej. Tienda oficial" />
-            </div>
-          </div>
-          <div class="link-list" id="links-list"></div>
-        </div>
-
-        <!-- REDES + ANALÍTICA -->
-        <div class="row" style="align-items:flex-start;">
-          <div style="flex:1;">
-            <div class="panel-subtitle" style="margin-bottom:6px;">Redes & ajustes</div>
-            <div class="form-grid">
-              <div class="field">
-                <label>Instagram</label>
-                <input
-                  class="input"
-                  id="input-ig"
-                  placeholder="@usuario"
-                  value="@cronos6x"
-                />
-              </div>
-              <div class="field">
-                <label>WhatsApp link</label>
-                <input
-                  class="input"
-                  id="input-wa"
-                  placeholder="https://wa.me/..."
-                />
-              </div>
-              <div class="field">
-                <label>X / Twitter</label>
-                <input
-                  class="input"
-                  id="input-x"
-                  placeholder="@usuario"
-                />
-              </div>
-              <div class="field">
-                <label>Color acento</label>
-                <select class="select" id="input-accent">
-                  <option value="indigo">Indigo</option>
-                  <option value="pink">Rosa</option>
-                  <option value="emerald">Verde</option>
-                  <option value="amber">Ámbar</option>
-                  <option value="violet">Violeta</option>
-                </select>
-              </div>
-            </div>
-            <div class="row-between" style="margin-top:8px;">
-              <div class="row">
-                <span style="font-size:11px;color:var(--muted);">Mostrar visitas</span>
-                <div class="toggle on" id="toggle-views">
-                  <div class="toggle-thumb"></div>
-                </div>
-              </div>
-              <div class="row" style="font-size:10px;color:var(--muted);">
-                <span>Simular tráfico</span>
-                <div class="toggle" id="toggle-sim">
-                  <div class="toggle-thumb"></div>
-                </div>
-              </div>
-            </div>
-            <div class="row" style="margin-top: 12px; gap: 8px;">
-              <button class="btn btn-ghost" id="btn-export">
-                <i class="fas fa-download"></i> Exportar datos
-              </button>
-              <button class="btn btn-ghost" id="btn-import">
-                <i class="fas fa-upload"></i> Importar datos
-              </button>
-              <button class="btn btn-ghost" id="btn-reset">
-                <i class="fas fa-redo"></i> Resetear
-              </button>
-            </div>
-          </div>
-          <div style="flex:1;">
-            <div class="panel-subtitle" style="margin-bottom:6px;">Analítica</div>
-            <div class="analytics-grid">
-              <div class="analytics-card">
-                <div class="analytics-label">Visitas</div>
-                <div class="analytics-value" id="analytics-views">0</div>
-                <div class="analytics-sub" id="analytics-views-sub">+0 hoy</div>
-              </div>
-              <div class="analytics-card">
-                <div class="analytics-label">Clicks</div>
-                <div class="analytics-value" id="analytics-clicks">0</div>
-                <div class="analytics-sub" id="analytics-clicks-sub">+0 hoy</div>
-              </div>
-              <div class="analytics-card">
-                <div class="analytics-label">CTR</div>
-                <div class="analytics-value" id="analytics-ctr">0%</div>
-                <div class="analytics-sub" id="analytics-ctr-sub">Estable</div>
-              </div>
-            </div>
-            <div style="margin-top: 12px; font-size: 10px; color: var(--muted);">
-              <p>Resumen:</p>
-              <p>Enlace más clickeado: <span id="most-clicked-link">Ninguno</span></p>
-              <p>CTR promedio: <span id="avg-ctr">0%</span></p>
-            </div>
-          </div>
-        </div>
-
-        <!-- COMPARTIR -->
-        <div>
-          <div class="panel-subtitle" style="margin-bottom:6px;">Compartir tu página pública</div>
-          
-          <div class="field" style="margin-bottom:10px;">
-            <label>URL de tu página pública</label>
-            <div class="code-box" style="margin-top:4px;">
-              <span id="share-url">public.html</span>
-              <button id="btn-copy-link">Copiar URL</button>
-            </div>
-            <div class="help-text">
-              Esta es la página que otros verán. Guárdala en GitHub Pages como "public.html"
-            </div>
-          </div>
-          
-          <div class="field" style="margin-bottom:10px;">
-            <label>Vista previa del enlace público</label>
-            <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
-              <span style="font-size:11px; color:var(--muted);">Enlace completo:</span>
-              <span style="font-size:11px; color:#a5b4fc;" id="full-public-url">
-                https://tusuario.github.io/public.html
-              </span>
-            </div>
-          </div>
-          
-          <div class="row" style="margin-top:12px; justify-content:space-between; align-items:center;">
-            <div class="row" style="gap:8px;">
-              <button class="btn btn-ghost" id="btn-open-public">
-                <span class="btn-icon">👁️</span> Ver página
-              </button>
-              <button class="btn btn-primary" id="btn-share-wa">
-                <span class="btn-icon">🟢</span> WhatsApp
-              </button>
-              <button class="btn btn-ghost" id="btn-share-x">
-                <span class="btn-icon">𝕏</span> X
-              </button>
-            </div>
-            <button class="btn btn-ghost" id="btn-export-html" style="font-size:11px;">
-              <span class="btn-icon">💾</span> Descargar HTML
-            </button>
-          </div>
-          
-          <div style="margin-top:12px; padding:10px; background:rgba(15,23,42,0.5); border-radius:10px; border:1px solid rgba(148,163,184,0.3);">
-            <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">
-              <strong>Para publicar en GitHub Pages:</strong>
-            </div>
-            <div style="font-size:10px; color:var(--muted); line-height:1.4;">
-              1. Descarga el HTML público con el botón arriba<br>
-              2. Súbelo a tu repositorio de GitHub como "public.html"<br>
-              3. Activa GitHub Pages en la configuración del repositorio<br>
-              4. Tu página estará en: <span id="github-pages-url" style="color:#a5b4fc;">https://tusuario.github.io/public.html</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+  <div class="row-controls">
+    <div class="input-wrap">
+      <span class="icon">📐</span>
+      <select id="unitSelect">
+        <option value="km">Kilómetros</option>
+        <option value="mi">Millas</option>
+        <option value="m">Metros</option>
+      </select>
+    </div>
+    <div class="input-wrap">
+      <span class="icon" style="font-size:10px;left:9px;">⭕</span>
+      <input type="number" id="radiusInput" value="1" min="0.01" step="0.1" style="padding-left:26px;" />
+    </div>
   </div>
 
-  <!-- Notificación Toast -->
-  <div class="toast" id="toast">
-    <span class="toast-icon">✅</span>
-    <span id="toast-text">Copiado</span>
+  <div>
+    <div class="section-title" style="margin-bottom:8px;">🎨 Color</div>
+    <div class="swatch-row" id="colorPicker">
+      <div class="color-swatch active" data-color="#00e5a0" style="background:#00e5a0;"></div>
+      <div class="color-swatch" data-color="#0099ff" style="background:#0099ff;"></div>
+      <div class="color-swatch" data-color="#ff4d6d" style="background:#ff4d6d;"></div>
+      <div class="color-swatch" data-color="#ffd166" style="background:#ffd166;"></div>
+      <div class="color-swatch" data-color="#c77dff" style="background:#c77dff;"></div>
+      <div class="color-swatch" data-color="#ff9f1c" style="background:#ff9f1c;"></div>
+      <div class="color-swatch" data-color="#00c8ff" style="background:#00c8ff;"></div>
+      <div class="color-swatch" data-color="#ff6b6b" style="background:#ff6b6b;"></div>
+    </div>
   </div>
 
-  <script>
-    // ============================================
-    // CONFIGURACIÓN INICIAL
-    // ============================================
-    const STORAGE_KEY = "cronos6x-bio-page-v2";
-    
-    const defaultState = {
-      profile: {
-        name: "Cronos",
-        username: "Cronos6x",
-        avatar: "⏳",
-        bio: "Creador digital. Experimentos, negocios y proyectos que no duermen.",
-        tags: ["🧪 Experimentos", "🚀 Proyectos", "🌙 Late Night Builder"],
-      },
-      theme: {
-        preset: "aura",
-        accent: "indigo",
-        showViews: true,
-        darkMode: true,
-      },
-      socials: {
-        ig: "@cronos6x",
-        wa: "",
-        x: "",
-        fb: "",
-      },
-      links: [
-        {
-          id: "aion",
-          title: "AION Parfums",
-          url: "https://aionparfums.com",
-          icon: "⚗️",
-          sub: "Tienda oficial de fragancias",
-          clicks: 0,
-          enabled: true,
-          order: 0,
-        },
-        {
-          id: "ig",
-          title: "Instagram",
-          url: "https://instagram.com/cronos6x",
-          icon: "📸",
-          sub: "Contenido y proyectos",
-          clicks: 0,
-          enabled: true,
-          order: 1,
-        },
-        {
-          id: "github",
-          title: "GitHub",
-          url: "https://github.com/cronos6x",
-          icon: "💻",
-          sub: "Código y proyectos",
-          clicks: 0,
-          enabled: true,
-          order: 2,
-        },
-      ],
-      analytics: {
-        views: 0,
-        clicks: 0,
-        todayViews: 0,
-        todayClicks: 0,
-        lastReset: new Date().toDateString(),
-      },
-      shareUrl: "public.html",
-      qrConfig: {
-        showQR: false,
-        size: 120,
-        color: "#6366f1",
-      }
+  <div class="status loading" id="statusLoading"><div class="spinner"></div><span>Buscando…</span></div>
+  <div class="status error"   id="statusError"><span>⚠️</span><span id="errorMsg">No encontrado.</span></div>
+
+  <button class="btn-add" id="addBtn">＋ &nbsp;Agregar al mapa</button>
+</div>
+
+<!-- Locations list header -->
+<div class="locations-header">
+  <div style="display:flex;align-items:center;">
+    <span class="section-title" style="margin:0;">Ubicaciones activas</span>
+    <span class="locations-count" id="locCount">0</span>
+  </div>
+  <button class="btn-clear-all" id="clearAllBtn">Limpiar todo</button>
+</div>
+
+<div class="locations-list" id="locationsList">
+  <div class="empty-state" id="emptyState">
+    <div class="e-icon">🗺️</div>
+    <div>Aún no hay ubicaciones.<br>Agrega la primera arriba.</div>
+  </div>
+</div>
+
+<div class="sidebar-footer">OpenStreetMap · Nominatim · Leaflet.js — Sin API key requerida</div>
+```
+
+  </aside>
+
+  <!-- ── Map ── -->
+
+  <div style="position:relative;">
+    <div id="map"></div>
+    <button class="btn-fit" id="fitAllBtn">🗺️ Ver todo</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* ═══════════════════════ MAP ═══════════════════════ */
+const map = L.map('map', { center: [20, 0], zoom: 2 });
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors', maxZoom: 19,
+}).addTo(map);
+
+/* ═══════════════════════ STATE ═══════════════════════ */
+const COLORS = ['#00e5a0','#0099ff','#ff4d6d','#ffd166','#c77dff','#ff9f1c','#00c8ff','#ff6b6b'];
+let locations   = [];
+let idCounter   = 0;
+let selectedColor = '#00e5a0';
+let debounceTimer = null;
+
+/* ═══════════════════════ ELEMENTS ═══════════════════════ */
+const locationInput = document.getElementById('locationInput');
+const suggestionsEl = document.getElementById('suggestions');
+const radiusInput   = document.getElementById('radiusInput');
+const unitSelect    = document.getElementById('unitSelect');
+const addBtn        = document.getElementById('addBtn');
+const statusLoading = document.getElementById('statusLoading');
+const statusError   = document.getElementById('statusError');
+const locationsList = document.getElementById('locationsList');
+const emptyState    = document.getElementById('emptyState');
+const locCount      = document.getElementById('locCount');
+const clearAllBtn   = document.getElementById('clearAllBtn');
+const fitAllBtn     = document.getElementById('fitAllBtn');
+const colorPicker   = document.getElementById('colorPicker');
+
+/* ═══════════════════════ HELPERS ═══════════════════════ */
+function toMeters(v, unit) {
+  if (unit === 'km') return v * 1000;
+  if (unit === 'mi') return v * 1609.344;
+  return v;
+}
+function areaKm2(m) { const r = m/1000; return (Math.PI*r*r).toFixed(2); }
+function setStatus(s) {
+  statusLoading.style.display = 'none'; statusError.style.display = 'none';
+  if (s === 'loading') statusLoading.style.display = 'flex';
+  if (s === 'error')   statusError.style.display   = 'flex';
+}
+function uid() { return ++idCounter; }
+function shortName(n) { return n.split(', ').slice(0,2).join(', '); }
+function fmtR(r, u) { return `${parseFloat(r).toFixed(1)} ${u}`; }
+function autoColor() {
+  const used = locations.map(l => l.color);
+  return COLORS.find(c => !used.includes(c)) || COLORS[locations.length % COLORS.length];
+}
+
+/* ═══════════════════════ COLOR PICKER ═══════════════════════ */
+colorPicker.querySelectorAll('.color-swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    colorPicker.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+    sw.classList.add('active');
+    selectedColor = sw.dataset.color;
+  });
+});
+
+function preselectColor() {
+  const c = autoColor();
+  selectedColor = c;
+  colorPicker.querySelectorAll('.color-swatch').forEach(sw =>
+    sw.classList.toggle('active', sw.dataset.color === c));
+}
+
+/* ═══════════════════════ AUTOCOMPLETE ═══════════════════════ */
+locationInput.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  const q = locationInput.value.trim();
+  if (q.length < 3) { suggestionsEl.classList.remove('active'); return; }
+  debounceTimer = setTimeout(() => fetchSugg(q, suggestionsEl, r => {
+    locationInput.value = r.display_name;
+    suggestionsEl.classList.remove('active');
+  }), 380);
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.input-wrap')) suggestionsEl.classList.remove('active');
+});
+
+async function fetchSugg(q, box, onSel) {
+  try {
+    const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`, { headers: {'Accept-Language':'es'} });
+    const data = await res.json();
+    renderSugg(data, box, onSel);
+  } catch {}
+}
+
+function renderSugg(results, box, onSel) {
+  box.innerHTML = '';
+  if (!results.length) { box.classList.remove('active'); return; }
+  results.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'suggestion-item';
+    const parts = r.display_name.split(', ');
+    el.innerHTML = `<span style="color:var(--accent);font-size:11px;margin-top:1px;flex-shrink:0;">📍</span>
+      <div><div class="s-main">${parts.slice(0,2).join(', ')}</div>
+      ${parts.length>2?`<div class="s-sub">${parts.slice(2).join(', ')}</div>`:''}</div>`;
+    el.addEventListener('click', () => { onSel(r); box.classList.remove('active'); });
+    box.appendChild(el);
+  });
+  box.classList.add('active');
+}
+
+/* ═══════════════════════ DRAW/REMOVE ═══════════════════════ */
+function drawLayer(loc) {
+  if (loc.circle) map.removeLayer(loc.circle);
+  if (loc.marker) map.removeLayer(loc.marker);
+  if (!loc.visible) return;
+
+  const rm = toMeters(parseFloat(loc.radius), loc.unit);
+  loc.circle = L.circle([loc.lat, loc.lng], {
+    radius: rm, color: loc.color, fillColor: loc.color,
+    fillOpacity: 0.09, weight: 2, dashArray: '6 4',
+  }).addTo(map);
+
+  loc.marker = L.circleMarker([loc.lat, loc.lng], {
+    radius: 6, color: loc.color, fillColor: loc.color, fillOpacity: 1, weight: 2,
+  }).addTo(map);
+
+  loc.marker.bindPopup(`
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;">
+      <span style="width:9px;height:9px;border-radius:50%;background:${loc.color};display:inline-block;flex-shrink:0;"></span>
+      <strong style="font-size:12px;">${shortName(loc.name)}</strong>
+    </div>
+    <div style="font-size:11px;color:var(--muted);">Radio · ${fmtR(loc.radius, loc.unit)}</div>
+    <div style="font-size:11px;color:var(--muted);">Área · ${areaKm2(rm)} km²</div>
+  `, { maxWidth: 240 });
+}
+
+function removeLayer(loc) {
+  if (loc.circle) { map.removeLayer(loc.circle); loc.circle = null; }
+  if (loc.marker) { map.removeLayer(loc.marker); loc.marker = null; }
+}
+
+/* ═══════════════════════ FIT ALL ═══════════════════════ */
+function fitAll() {
+  const v = locations.filter(l => l.visible && l.circle);
+  if (!v.length) return;
+  const b = v.map(l => l.circle.getBounds()).reduce((a, b) => a.extend(b));
+  map.fitBounds(b, { padding: [60, 60] });
+}
+
+/* ═══════════════════════ RENDER LIST ═══════════════════════ */
+function renderList() {
+  locCount.textContent = locations.length;
+  emptyState.style.display = locations.length ? 'none' : 'flex';
+
+  locationsList.querySelectorAll('.loc-card').forEach(card => {
+    if (!locations.find(l => l.id == card.dataset.id)) card.remove();
+  });
+
+  locations.forEach(loc => {
+    let card = locationsList.querySelector(`.loc-card[data-id="${loc.id}"]`);
+    if (!card) {
+      card = buildCard(loc);
+      locationsList.insertBefore(card, emptyState);
+    }
+    syncCard(card, loc);
+  });
+}
+
+function buildCard(loc) {
+  const card = document.createElement('div');
+  card.className = 'loc-card';
+  card.dataset.id = loc.id;
+
+  card.innerHTML = `
+    <div class="loc-card-header">
+      <span class="loc-dot"></span>
+      <span class="loc-name"></span>
+      <span class="loc-badge"></span>
+      <div class="loc-actions">
+        <button class="loc-btn toggle-btn" title="Mostrar/Ocultar">👁️</button>
+        <button class="loc-btn focus-btn"  title="Centrar en mapa">🎯</button>
+        <button class="loc-btn delete"     title="Eliminar">✕</button>
+      </div>
+    </div>
+    <div class="loc-body">
+      <div class="loc-edit-row">
+        <select class="loc-unit-sel">
+          <option value="km">Kilómetros</option>
+          <option value="mi">Millas</option>
+          <option value="m">Metros</option>
+        </select>
+        <input type="number" class="loc-radius-inp" min="0.01" step="0.1" />
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.8px;text-transform:uppercase;font-weight:600;">Color</div>
+      <div class="loc-color-row"></div>
+    </div>`;
+
+  // Colors
+  const colorRow = card.querySelector('.loc-color-row');
+  COLORS.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className = 'loc-swatch';
+    sw.dataset.color = c;
+    sw.style.background = c;
+    sw.addEventListener('click', () => {
+      colorRow.querySelectorAll('.loc-swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      loc.color = c;
+      drawLayer(loc);
+      syncCard(card, loc);
+    });
+    colorRow.appendChild(sw);
+  });
+
+  // Toggle expand
+  card.querySelector('.loc-card-header').addEventListener('click', e => {
+    if (e.target.closest('.loc-actions')) return;
+    card.querySelector('.loc-body').classList.toggle('open');
+  });
+
+  // Toggle visibility
+  card.querySelector('.toggle-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    loc.visible = !loc.visible;
+    drawLayer(loc); syncCard(card, loc);
+  });
+
+  // Focus
+  card.querySelector('.focus-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    if (loc.circle) map.fitBounds(loc.circle.getBounds(), { padding: [80,80] });
+    if (loc.marker) loc.marker.openPopup();
+  });
+
+  // Delete
+  card.querySelector('.delete').addEventListener('click', e => {
+    e.stopPropagation();
+    removeLayer(loc);
+    locations = locations.filter(l => l.id !== loc.id);
+    card.style.animation = 'none';
+    card.style.transition = 'opacity .18s, transform .18s';
+    card.style.opacity = '0'; card.style.transform = 'translateY(-4px)';
+    setTimeout(() => { card.remove(); renderList(); }, 190);
+  });
+
+  // Radius edit
+  card.querySelector('.loc-radius-inp').addEventListener('input', function() {
+    loc.radius = parseFloat(this.value) || 0.1;
+    drawLayer(loc); syncCard(card, loc);
+  });
+
+  // Unit edit
+  card.querySelector('.loc-unit-sel').addEventListener('change', function() {
+    loc.unit = this.value;
+    drawLayer(loc); syncCard(card, loc);
+  });
+
+  return card;
+}
+
+function syncCard(card, loc) {
+  card.querySelector('.loc-dot').style.background = loc.color;
+  card.querySelector('.loc-name').textContent = shortName(loc.name);
+  const badge = card.querySelector('.loc-badge');
+  badge.textContent = fmtR(loc.radius, loc.unit);
+  badge.style.background = loc.color + '20';
+  badge.style.color = loc.color;
+
+  card.querySelector('.loc-unit-sel').value = loc.unit;
+  card.querySelector('.loc-radius-inp').value = loc.radius;
+  card.querySelectorAll('.loc-swatch').forEach(sw =>
+    sw.classList.toggle('active', sw.dataset.color === loc.color));
+
+  const tb = card.querySelector('.toggle-btn');
+  tb.style.opacity = loc.visible ? '1' : '0.38';
+  card.style.opacity = loc.visible ? '1' : '0.52';
+}
+
+/* ═══════════════════════ ADD ═══════════════════════ */
+addBtn.addEventListener('click', async () => {
+  const q = locationInput.value.trim();
+  if (!q) { document.getElementById('errorMsg').textContent = 'Escribe una dirección.'; setStatus('error'); return; }
+
+  setStatus('loading'); addBtn.disabled = true;
+  try {
+    const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`, { headers: {'Accept-Language':'es'} });
+    const data = await res.json();
+    if (!data.length) throw new Error();
+
+    const loc = {
+      id: uid(),
+      name: data[0].display_name,
+      lat: parseFloat(data[0].lat),
+      lng: parseFloat(data[0].lon),
+      radius: parseFloat(radiusInput.value) || 1,
+      unit: unitSelect.value,
+      color: selectedColor,
+      visible: true,
+      circle: null, marker: null,
     };
 
-    let state = loadState();
-    let dragSrcEl = null;
-    let dragStartIndex = null;
-    let simInterval = null;
+    locations.push(loc);
+    drawLayer(loc);
+    renderList();
+    setStatus(null);
+    locationInput.value = '';
+    fitAll();
+    preselectColor();
+  } catch {
+    document.getElementById('errorMsg').textContent = 'No se encontró. Intenta con más detalle.';
+    setStatus('error');
+  } finally {
+    addBtn.disabled = false;
+  }
+});
+
+locationInput.addEventListener('keydown', e => { if (e.key === 'Enter') addBtn.click(); });
+
+/* ═══════════════════════ CLEAR ALL ═══════════════════════ */
+clearAllBtn.addEventListener('click', () => {
+  locations.forEach(l => removeLayer(l));
+  locations = [];
+  locationsList.querySelectorAll('.loc-card').forEach(c => c.remove());
+  renderList();
+});
+
+/* ═══════════════════════ FIT BTN ═══════════════════════ */
+fitAllBtn.addEventListener('click', fitAll);
+
+/* ═══════════════════════ INIT ═══════════════════════ */
+renderList();
+preselectColor();
+</script>
 
-    // ============================================
-    // ELEMENTOS DEL DOM
-    // ============================================
-    const elName = document.getElementById("preview-name");
-    const elUser = document.getElementById("preview-username");
-    const elUser2 = document.getElementById("preview-username-2");
-    const elAvatar = document.getElementById("preview-avatar");
-    const elBio = document.getElementById("preview-bio");
-    const elTags = document.getElementById("preview-tags");
-    const elLinksPreview = document.getElementById("preview-links");
-    const elSocialsPreview = document.getElementById("preview-socials");
-    const elTotalViews = document.getElementById("preview-total-views");
-    const elTotalClicks = document.getElementById("preview-total-clicks");
-    const elCTR = document.getElementById("preview-ctr");
-    const elVisitsBadge = document.getElementById("preview-visits-badge");
-    const elPreviewLinkText = document.getElementById("preview-link-text");
-    const elQrContainer = document.getElementById("qr-container");
-    const elToggleQr = document.getElementById("toggle-qr");
-    const elQrCode = document.getElementById("qr-code");
-
-    const inputName = document.getElementById("input-name");
-    const inputUsername = document.getElementById("input-username");
-    const inputAvatar = document.getElementById("input-avatar");
-    const inputTags = document.getElementById("input-tags");
-    const inputBio = document.getElementById("input-bio");
-    const inputLinkTitle = document.getElementById("input-link-title");
-    const inputLinkUrl = document.getElementById("input-link-url");
-    const inputLinkIcon = document.getElementById("input-link-icon");
-    const inputLinkSub = document.getElementById("input-link-sub");
-    const btnAddLink = document.getElementById("btn-add-link");
-    const linksList = document.getElementById("links-list");
-    const inputIG = document.getElementById("input-ig");
-    const inputWA = document.getElementById("input-wa");
-    const inputX = document.getElementById("input-x");
-    const inputAccent = document.getElementById("input-accent");
-    const toggleViews = document.getElementById("toggle-views");
-    const toggleSim = document.getElementById("toggle-sim");
-    const analyticsViews = document.getElementById("analytics-views");
-    const analyticsClicks = document.getElementById("analytics-clicks");
-    const analyticsCTR = document.getElementById("analytics-ctr");
-    const analyticsViewsSub = document.getElementById("analytics-views-sub");
-    const analyticsClicksSub = document.getElementById("analytics-clicks-sub");
-    const analyticsCTRSub = document.getElementById("analytics-ctr-sub");
-    const shareUrl = document.getElementById("share-url");
-    const btnCopyLink = document.getElementById("btn-copy-link");
-    const btnShareWA = document.getElementById("btn-share-wa");
-    const btnShareX = document.getElementById("btn-share-x");
-    const themeChips = document.querySelectorAll(".chip[data-theme]");
-    const toast = document.getElementById("toast");
-    const toastText = document.getElementById("toast-text");
-    
-    const btnAvatarPicker = document.getElementById("btn-avatar-picker");
-    const avatarModal = document.getElementById("avatar-modal");
-    const closeModal = document.getElementById("close-modal");
-    const emojiOptions = document.querySelectorAll(".emoji-option");
-    const customEmoji = document.getElementById("custom-emoji");
-    const saveAvatar = document.getElementById("save-avatar");
-    const themeToggle = document.getElementById("theme-toggle");
-    const btnExport = document.getElementById("btn-export");
-    const btnImport = document.getElementById("btn-import");
-    const btnReset = document.getElementById("btn-reset");
-    const mostClickedLink = document.getElementById("most-clicked-link");
-    const avgCtr = document.getElementById("avg-ctr");
-    const btnOpenPublic = document.getElementById("btn-open-public");
-    const btnExportHtml = document.getElementById("btn-export-html");
-    const fullPublicUrl = document.getElementById("full-public-url");
-    const githubPagesUrl = document.getElementById("github-pages-url");
-
-    // ============================================
-    // FUNCIONES DE ESTADO
-    // ============================================
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(defaultState);
-        const parsed = JSON.parse(raw);
-        return { ...structuredClone(defaultState), ...parsed };
-      } catch {
-        return structuredClone(defaultState);
-      }
-    }
-
-    function saveState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (error) {
-        console.error("Error guardando estado:", error);
-        showToast("Error al guardar", "error");
-      }
-    }
-
-    function exportData() {
-      const dataStr = JSON.stringify(state, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      const exportFileDefaultName = `cronos6x-bio-backup-${new Date().toISOString().slice(0,10)}.json`;
-      
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
-      linkElement.click();
-      
-      showToast("Datos exportados correctamente");
-    }
-
-    function importData(file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const importedState = JSON.parse(e.target.result);
-          state = { ...structuredClone(defaultState), ...importedState };
-          saveState();
-          renderAll();
-          showToast("Datos importados correctamente");
-        } catch {
-          showToast("Error: Archivo inválido", "error");
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function resetData() {
-      if (confirm("¿Estás seguro de resetear todos los datos? Se perderá toda la información.")) {
-        state = structuredClone(defaultState);
-        saveState();
-        renderAll();
-        showToast("Datos reseteados correctamente");
-      }
-    }
-
-    // ============================================
-    // FUNCIONES DE RENDERIZADO
-    // ============================================
-    function renderAll() {
-      renderTheme();
-      renderProfile();
-      renderLinks();
-      renderSocials();
-      renderAnalytics();
-      renderControls();
-      updatePublicLinks();
-      updateQRCode();
-    }
-
-    function renderTheme() {
-      const preset = state.theme.preset;
-      const accent = state.theme.accent;
-
-      themeChips.forEach((chip) => {
-        chip.classList.toggle("active", chip.dataset.theme === preset);
-      });
-
-      const root = document.documentElement;
-      const accentMap = {
-        indigo: ["#6366f1", "#4f46e5"],
-        pink: ["#ec4899", "#db2777"],
-        emerald: ["#22c55e", "#16a34a"],
-        amber: ["#f59e0b", "#d97706"],
-        violet: ["#8b5cf6", "#7c3aed"],
-      };
-      const [accentColor, accentStrong] = accentMap[accent] || accentMap.indigo;
-
-      if (preset === "aura") {
-        root.style.setProperty("--bg", state.theme.darkMode ? "#050816" : "#f8fafc");
-        root.style.setProperty("--bg-alt", state.theme.darkMode ? "#020617" : "#f1f5f9");
-      } else if (preset === "nebula") {
-        root.style.setProperty("--bg", state.theme.darkMode ? "#020617" : "#f0f9ff");
-        root.style.setProperty("--bg-alt", state.theme.darkMode ? "#0b1120" : "#e0f2fe");
-      } else if (preset === "acid") {
-        root.style.setProperty("--bg", state.theme.darkMode ? "#020617" : "#f0fdf4");
-        root.style.setProperty("--bg-alt", state.theme.darkMode ? "#052e16" : "#dcfce7");
-      } else if (preset === "sunset") {
-        root.style.setProperty("--bg", state.theme.darkMode ? "#020617" : "#fff7ed");
-        root.style.setProperty("--bg-alt", state.theme.darkMode ? "#111827" : "#ffedd5");
-      }
-      
-      root.style.setProperty("--accent", accentColor);
-      root.style.setProperty("--accent-soft", accentStrong + "55");
-      
-      const themeIcon = themeToggle.querySelector("i");
-      if (state.theme.darkMode) {
-        themeIcon.className = "fas fa-moon";
-        themeToggle.title = "Cambiar a modo claro";
-      } else {
-        themeIcon.className = "fas fa-sun";
-        themeToggle.title = "Cambiar a modo oscuro";
-      }
-    }
-
-    function renderProfile() {
-      const { profile } = state;
-      elName.textContent = profile.name || "Sin nombre";
-      elUser.textContent = profile.username || "usuario";
-      elUser2.textContent = profile.username || "usuario";
-      elAvatar.textContent = profile.avatar || "✨";
-      elBio.textContent = profile.bio || "";
-      elTags.innerHTML = "";
-
-      (profile.tags || []).forEach((tag) => {
-        const span = document.createElement("span");
-        span.className = "tag";
-        span.textContent = tag.trim();
-        elTags.appendChild(span);
-      });
-
-      elPreviewLinkText.textContent = state.shareUrl || "public.html";
-    }
-
-    function renderLinks() {
-      state.links.sort((a, b) => a.order - b.order);
-      
-      elLinksPreview.innerHTML = "";
-      linksList.innerHTML = "";
-
-      state.links.forEach((link, index) => {
-        if (link.enabled) {
-          const btn = document.createElement("button");
-          btn.className = "link-btn";
-          btn.type = "button";
-          btn.addEventListener("click", () => handleClickLink(link.id));
-
-          btn.innerHTML = `
-            <div class="link-main">
-              <div class="link-icon">${link.icon || "🔗"}</div>
-              <div class="link-text">
-                <span class="link-title">${link.title || "Sin título"}</span>
-                <span class="link-subtitle">${link.sub || ""}</span>
-              </div>
-            </div>
-            <div class="link-meta">
-              <span class="link-clicks">${link.clicks || 0} clicks</span>
-              <span class="link-cta">Tap para abrir ↗</span>
-            </div>
-          `;
-          elLinksPreview.appendChild(btn);
-        }
-
-        const row = document.createElement("div");
-        row.className = "link-item-row";
-        row.setAttribute("draggable", "true");
-        row.setAttribute("data-id", link.id);
-        row.setAttribute("data-index", index);
-
-        row.addEventListener("dragstart", handleDragStart);
-        row.addEventListener("dragover", handleDragOver);
-        row.addEventListener("drop", handleDrop);
-        row.addEventListener("dragend", handleDragEnd);
-
-        const badgeClass = link.enabled ? "badge ready" : "badge off";
-        const badgeText = link.enabled ? "On" : "Off";
-
-        row.innerHTML = `
-          <div class="drag-handle">⋮⋮</div>
-          <div class="link-item-main">
-            <span class="link-item-title">${link.icon || "🔗"} ${link.title || "Sin título"}</span>
-            <span class="link-item-url">${link.url || ""}</span>
-            <span class="link-item-meta">${link.clicks || 0} clicks • Orden: ${link.order || 0}</span>
-          </div>
-          <div class="link-item-actions">
-            <button class="${badgeClass}" data-id="${link.id}" data-action="toggle">${badgeText}</button>
-            <button class="badge" data-id="${link.id}" data-action="delete">Eliminar</button>
-          </div>
-        `;
-
-        row.querySelectorAll("button").forEach((btn) => {
-          btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const id = btn.dataset.id;
-            const action = btn.dataset.action;
-            if (action === "toggle") {
-              toggleLink(id);
-            } else if (action === "delete") {
-              deleteLink(id);
-            }
-          });
-        });
-
-        linksList.appendChild(row);
-      });
-      
-      updateLinkStats();
-    }
-
-    function renderSocials() {
-      const { socials } = state;
-      elSocialsPreview.innerHTML = "";
-
-      if (socials.ig) {
-        const a = document.createElement("a");
-        a.className = "social-pill";
-        a.href = socials.ig.startsWith("@") 
-          ? "https://instagram.com/" + socials.ig.replace("@", "") 
-          : socials.ig;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.title = "Instagram";
-        a.innerHTML = '<i class="fab fa-instagram"></i>';
-        elSocialsPreview.appendChild(a);
-      }
-      if (socials.wa) {
-        const a = document.createElement("a");
-        a.className = "social-pill";
-        a.href = socials.wa;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.title = "WhatsApp";
-        a.innerHTML = '<i class="fab fa-whatsapp"></i>';
-        elSocialsPreview.appendChild(a);
-      }
-      if (socials.x) {
-        const a = document.createElement("a");
-        a.className = "social-pill";
-        a.href = socials.x.startsWith("@") 
-          ? "https://x.com/" + socials.x.replace("@", "") 
-          : socials.x;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.title = "X / Twitter";
-        a.innerHTML = '<i class="fab fa-twitter"></i>';
-        elSocialsPreview.appendChild(a);
-      }
-      if (socials.fb) {
-        const a = document.createElement("a");
-        a.className = "social-pill";
-        a.href = socials.fb;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.title = "Facebook";
-        a.innerHTML = '<i class="fab fa-facebook"></i>';
-        elSocialsPreview.appendChild(a);
-      }
-    }
-
-    function renderAnalytics() {
-      const { analytics, theme } = state;
-      const { views, clicks, todayViews, todayClicks } = analytics;
-      const ctr = views ? Math.round((clicks / views) * 100) : 0;
-
-      elTotalViews.textContent = views;
-      elTotalClicks.textContent = clicks;
-      elCTR.textContent = ctr + "%";
-
-      analyticsViews.textContent = views;
-      analyticsClicks.textContent = clicks;
-      analyticsCTR.textContent = ctr + "%";
-
-      analyticsViewsSub.textContent = `+${todayViews} hoy`;
-      analyticsClicksSub.textContent = `+${todayClicks} hoy`;
-      analyticsCTRSub.textContent = ctr > 10 ? "Alto" : ctr > 5 ? "Medio" : "Bajo";
-
-      elVisitsBadge.textContent = theme.showViews ? `${views} visitas` : "Privado";
-    }
-
-    function renderControls() {
-      const { profile, socials, theme, shareUrl } = state;
-
-      inputName.value = profile.name;
-      inputUsername.value = profile.username;
-      inputAvatar.value = profile.avatar;
-      inputTags.value = (profile.tags || []).join(", ");
-      inputBio.value = profile.bio;
-
-      inputIG.value = socials.ig || "";
-      inputWA.value = socials.wa || "";
-      inputX.value = socials.x || "";
-
-      inputAccent.value = theme.accent;
-
-      toggleViews.classList.toggle("on", theme.showViews);
-
-      shareUrl.textContent = shareUrl || "public.html";
-    }
-
-    function updateLinkStats() {
-      if (state.links.length === 0) {
-        mostClickedLink.textContent = "Ninguno";
-        avgCtr.textContent = "0%";
-        return;
-      }
-      
-      const mostClicked = state.links.reduce((prev, current) => 
-        (prev.clicks > current.clicks) ? prev : current
-      );
-      mostClickedLink.textContent = mostClicked.title;
-      
-      const totalClicks = state.links.reduce((sum, link) => sum + link.clicks, 0);
-      const avg = Math.round(totalClicks / state.links.length);
-      avgCtr.textContent = avg + "%";
-    }
-
-    function updateQRCode() {
-      if (!elQrCode) return;
-      
-      elQrCode.innerHTML = "";
-      
-      if (state.qrConfig.showQR) {
-        elQrCode.innerHTML = `
-          <div style="width: ${state.qrConfig.size}px; height: ${state.qrConfig.size}px; 
-                      background: linear-gradient(45deg, ${state.theme.accent}, #8b5cf6); 
-                      display: flex; align-items: center; justify-content: center; 
-                      border-radius: 8px; color: white; font-size: 12px;">
-            QR Code<br>${state.shareUrl}
-          </div>
-        `;
-      }
-    }
-
-    function generatePublicUrl() {
-      const currentUrl = window.location.href;
-      const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
-      return baseUrl + 'public.html';
-    }
-
-    function updatePublicLinks() {
-      const publicUrl = generatePublicUrl();
-      fullPublicUrl.textContent = publicUrl;
-      
-      const exampleGitHubUrl = "https://" + (state.profile.username || "tusuario") + ".github.io/public.html";
-      githubPagesUrl.textContent = exampleGitHubUrl;
-    }
-
-    // ============================================
-    // DRAG AND DROP
-    // ============================================
-    function handleDragStart(e) {
-      dragSrcEl = this;
-      dragStartIndex = parseInt(this.getAttribute("data-index"));
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/html", this.innerHTML);
-      
-      this.classList.add("dragging");
-      setTimeout(() => this.style.display = "none", 0);
-    }
-
-    function handleDragOver(e) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      return false;
-    }
-
-    function handleDrop(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      
-      if (dragSrcEl !== this) {
-        const dropIndex = parseInt(this.getAttribute("data-index"));
-        const linkId = dragSrcEl.getAttribute("data-id");
-        const link = state.links.find(l => l.id === linkId);
-        
-        if (link) {
-          state.links = state.links.filter(l => l.id !== linkId);
-          state.links.splice(dropIndex, 0, link);
-          
-          state.links.forEach((link, index) => {
-            link.order = index;
-          });
-          
-          saveState();
-          renderLinks();
-          showToast("Enlace reordenado");
-        }
-      }
-      
-      return false;
-    }
-
-    function handleDragEnd() {
-      this.classList.remove("dragging");
-      this.style.display = "";
-    }
-
-    // ============================================
-    // MANEJADORES DE EVENTOS
-    // ============================================
-    inputName.addEventListener("input", (e) => {
-      state.profile.name = e.target.value;
-      saveState();
-      renderProfile();
-    });
-
-    inputUsername.addEventListener("input", (e) => {
-      state.profile.username = e.target.value;
-      saveState();
-      renderProfile();
-    });
-
-    inputAvatar.addEventListener("input", (e) => {
-      state.profile.avatar = e.target.value;
-      saveState();
-      renderProfile();
-    });
-
-    inputTags.addEventListener("input", (e) => {
-      state.profile.tags = e.target.value.split(",").map((t) => t.trim()).filter(Boolean);
-      saveState();
-      renderProfile();
-    });
-
-    inputBio.addEventListener("input", (e) => {
-      state.profile.bio = e.target.value;
-      saveState();
-      renderProfile();
-    });
-
-    btnAddLink.addEventListener("click", () => {
-      const title = inputLinkTitle.value.trim();
-      const url = inputLinkUrl.value.trim();
-      const icon = inputLinkIcon.value.trim();
-      const sub = inputLinkSub.value.trim();
-
-      if (!title || !url) {
-        showToast("Título y URL son obligatorios", "error");
-        return;
-      }
-
-      if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        showToast("La URL debe comenzar con http:// o https://", "error");
-        return;
-      }
-
-      const id = "link-" + Date.now();
-      state.links.push({
-        id,
-        title,
-        url,
-        icon: icon || "🔗",
-        sub,
-        clicks: 0,
-        enabled: true,
-        order: state.links.length,
-      });
-
-      inputLinkTitle.value = "";
-      inputLinkUrl.value = "";
-      inputLinkIcon.value = "";
-      inputLinkSub.value = "";
-
-      saveState();
-      renderLinks();
-      showToast("Enlace añadido");
-    });
-
-    inputIG.addEventListener("input", (e) => {
-      state.socials.ig = e.target.value;
-      saveState();
-      renderSocials();
-    });
-
-    inputWA.addEventListener("input", (e) => {
-      state.socials.wa = e.target.value;
-      saveState();
-      renderSocials();
-    });
-
-    inputX.addEventListener("input", (e) => {
-      state.socials.x = e.target.value;
-      saveState();
-      renderSocials();
-    });
-
-    inputAccent.addEventListener("change", (e) => {
-      state.theme.accent = e.target.value;
-      saveState();
-      renderTheme();
-    });
-
-    toggleViews.addEventListener("click", () => {
-      state.theme.showViews = !state.theme.showViews;
-      toggleViews.classList.toggle("on", state.theme.showViews);
-      saveState();
-      renderAnalytics();
-    });
-
-    toggleSim.addEventListener("click", () => {
-      const isOn = toggleSim.classList.toggle("on");
-      if (isOn) {
-        startSimulation();
-        showToast("Simulación de tráfico activada");
-      } else {
-        stopSimulation();
-        showToast("Simulación de tráfico desactivada");
-      }
-    });
-
-    themeChips.forEach((chip) => {
-      chip.addEventListener("click", () => {
-        state.theme.preset = chip.dataset.theme;
-        saveState();
-        renderTheme();
-      });
-    });
-
-    // ============================================
-    // FUNCIONES DE ENLACES
-    // ============================================
-    function handleClickLink(id) {
-      const link = state.links.find((l) => l.id === id);
-      if (!link) return;
-
-      link.clicks = (link.clicks || 0) + 1;
-      state.analytics.clicks += 1;
-      state.analytics.todayClicks += 1;
-
-      saveState();
-      renderLinks();
-      renderAnalytics();
-
-      if (link.url) {
-        window.open(link.url, "_blank");
-      }
-    }
-
-    function toggleLink(id) {
-      const link = state.links.find((l) => l.id === id);
-      if (!link) return;
-      link.enabled = !link.enabled;
-      saveState();
-      renderLinks();
-      showToast(`Enlace ${link.enabled ? "activado" : "desactivado"}`);
-    }
-
-    function deleteLink(id) {
-      if (confirm("¿Estás seguro de eliminar este enlace?")) {
-        state.links = state.links.filter((l) => l.id !== id);
-        saveState();
-        renderLinks();
-        showToast("Enlace eliminado");
-      }
-    }
-
-    // ============================================
-    // NUEVAS FUNCIONALIDADES
-    // ============================================
-    btnAvatarPicker.addEventListener("click", () => {
-      avatarModal.style.display = "flex";
-    });
-
-    closeModal.addEventListener("click", () => {
-      avatarModal.style.display = "none";
-    });
-
-    window.addEventListener("click", (e) => {
-      if (e.target === avatarModal) {
-        avatarModal.style.display = "none";
-      }
-    });
-
-    emojiOptions.forEach(option => {
-      option.addEventListener("click", () => {
-        customEmoji.value = option.textContent;
-      });
-    });
-
-    saveAvatar.addEventListener("click", () => {
-      const newAvatar = customEmoji.value.trim();
-      if (newAvatar) {
-        state.profile.avatar = newAvatar;
-        inputAvatar.value = newAvatar;
-        saveState();
-        renderProfile();
-        avatarModal.style.display = "none";
-        showToast("Avatar actualizado");
-      }
-    });
-
-    elAvatar.addEventListener("click", () => {
-      btnAvatarPicker.click();
-    });
-
-    themeToggle.addEventListener("click", () => {
-      state.theme.darkMode = !state.theme.darkMode;
-      saveState();
-      renderTheme();
-      showToast(state.theme.darkMode ? "Modo oscuro activado" : "Modo claro activado");
-    });
-
-    elToggleQr.addEventListener("click", () => {
-      state.qrConfig.showQR = !state.qrConfig.showQR;
-      if (state.qrConfig.showQR) {
-        elQrContainer.style.display = "flex";
-        elToggleQr.textContent = "Ocultar QR";
-      } else {
-        elQrContainer.style.display = "none";
-        elToggleQr.textContent = "Mostrar QR";
-      }
-      saveState();
-      updateQRCode();
-    });
-
-    elPreviewLinkText.addEventListener("click", () => {
-      btnCopyLink.click();
-    });
-
-    btnExport.addEventListener("click", exportData);
-
-    btnImport.addEventListener("click", () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".json";
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) importData(file);
-      };
-      input.click();
-    });
-
-    btnReset.addEventListener("click", resetData);
-
-    // ============================================
-    // FUNCIONES DE PUBLICACIÓN
-    // ============================================
-    function exportPublicHtml() {
-      const publicHtmlContent = `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>${state.profile.name || "Cronos6x"} | Links</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="${state.profile.bio || "Página de enlaces"}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <style>
-    :root {
-      --bg: #050816;
-      --bg-alt: #0b1020;
-      --accent: #6366f1;
-      --accent-soft: rgba(99, 102, 241, 0.25);
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --card: rgba(15, 23, 42, 0.85);
-      --success: #22c55e;
-      --radius-lg: 22px;
-      --radius-md: 14px;
-      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.7);
-      --blur: 22px;
-      --transition: 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    
-    .container { width: 100%; max-width: 420px; margin: 0 auto; }
-    
-    .device {
-      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.98));
-      border-radius: 40px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      padding: 14px;
-      max-width: 380px;
-      margin: 0 auto;
-      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.9);
-      position: relative;
-    }
-    
-    .device-notch {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 40%;
-      height: 16px;
-      background: #020617;
-      border-radius: 0 0 14px 14px;
-    }
-    
-    .device-inner {
-      background: radial-gradient(circle at top, #020617 0, #020617 40%, #020617 100%);
-      border-radius: 26px;
-      padding: 22px 16px 18px;
-      border: 1px solid rgba(30, 64, 175, 0.45);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .device-inner::before {
-      content: "";
-      position: absolute;
-      inset: -35%;
-      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.18), transparent 55%),
-                  radial-gradient(circle at bottom, rgba(236, 72, 153, 0.18), transparent 55%);
-      opacity: 0.9;
-      pointer-events: none;
-    }
-    
-    .device-content { position: relative; z-index: 1; }
-    
-    .profile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-    
-    .avatar {
-      width: 70px;
-      height: 70px;
-      border-radius: 24px;
-      background: radial-gradient(circle at top, #f97316, #ea580c, #b91c1c);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      box-shadow: 0 15px 35px rgba(249, 115, 22, 0.65);
-      border: 3px solid rgba(15, 23, 42, 0.9);
-    }
-    
-    .name { font-weight: 600; font-size: 17px; display: flex; align-items: center; gap: 6px; }
-    
-    .username {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    
-    .bio {
-      font-size: 12px;
-      color: #e5e7eb;
-      max-width: 260px;
-      line-height: 1.4;
-    }
-    
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 6px;
-      margin: 8px 0 10px;
-    }
-    
-    .tag {
-      font-size: 10px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      color: var(--muted);
-    }
-    
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-    
-    .stat {
-      background: rgba(15, 23, 42, 0.88);
-      border-radius: 14px;
-      padding: 6px 8px;
-      border: 1px solid rgba(51, 65, 85, 0.9);
-      text-align: center;
-    }
-    
-    .stat-label {
-      font-size: 9px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    
-    .stat-value { font-size: 13px; font-weight: 600; }
-    
-    .links {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    
-    .link-btn {
-      border-radius: 999px;
-      padding: 9px 11px;
-      border: 1px solid rgba(148, 163, 184, 0.45);
-      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.25), rgba(15, 23, 42, 0.95));
-      color: var(--text);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 13px;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease,
-                  background 0.12s ease;
-      cursor: pointer;
-    }
-    
-    .link-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 25px rgba(15, 23, 42, 0.85);
-      border-color: rgba(129, 140, 248, 0.9);
-      background: radial-gradient(circle at top left, rgba(129, 140, 248, 0.35), rgba(15, 23, 42, 0.98));
-    }
-    
-    .link-main { display: flex; align-items: center; gap: 9px; }
-    
-    .link-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(148, 163, 184, 0.6);
-    }
-    
-    .link-text { display: flex; flex-direction: column; }
-    
-    .link-title { font-size: 13px; font-weight: 500; }
-    
-    .link-subtitle { font-size: 10px; color: var(--muted); }
-    
-    .link-meta {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
-    
-    .link-clicks { font-size: 11px; color: #a5b4fc; }
-    
-    .link-cta { font-size: 10px; color: #22c55e; }
-    
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 4px;
-    }
-    
-    .socials { display: flex; align-items: center; gap: 6px; }
-    
-    .social-pill {
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.55);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      background: rgba(15, 23, 42, 0.92);
-      color: #e5e7eb;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all var(--transition);
-    }
-    
-    .social-pill:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent);
-      background: rgba(15, 23, 42, 1);
-    }
-    
-    .designer { font-size: 9px; color: var(--muted); }
-    
-    .designer span { color: #a5b4fc; }
-    
-    .page-footer {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-    
-    .page-footer a {
-      color: #a5b4fc;
-      text-decoration: none;
-    }
-    
-    .page-footer a:hover { text-decoration: underline; }
-    
-    @media (max-width: 480px) {
-      .device { padding: 10px; border-radius: 30px; }
-      .device-inner { padding: 18px 12px 14px; }
-      body { padding: 10px; }
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .device { animation: fadeIn 0.5s ease-out; }
-    
-    .link-btn {
-      animation: fadeIn 0.5s ease-out;
-      animation-fill-mode: both;
-    }
-    
-    .link-btn:nth-child(1) { animation-delay: 0.1s; }
-    .link-btn:nth-child(2) { animation-delay: 0.2s; }
-    .link-btn:nth-child(3) { animation-delay: 0.3s; }
-    .link-btn:nth-child(4) { animation-delay: 0.4s; }
-    .link-btn:nth-child(5) { animation-delay: 0.5s; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="device">
-      <div class="device-notch"></div>
-      <div class="device-inner">
-        <div class="device-content">
-          <div class="profile">
-            <div class="avatar" id="public-avatar">${state.profile.avatar || "✨"}</div>
-            <div class="name">
-              <span id="public-name">${state.profile.name || "Sin nombre"}</span>
-            </div>
-            <div class="username">@<span id="public-username">${state.profile.username || "usuario"}</span></div>
-            <p class="bio" id="public-bio">${state.profile.bio || ""}</p>
-            <div class="tags" id="public-tags">
-              ${(state.profile.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
-            </div>
-          </div>
-          
-          <div class="stats" id="public-stats">
-            <div class="stat">
-              <div class="stat-label">Visitas</div>
-              <div class="stat-value" id="public-views">${state.analytics.views || 0}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">Clicks</div>
-              <div class="stat-value" id="public-clicks">${state.analytics.clicks || 0}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">CTR</div>
-              <div class="stat-value" id="public-ctr">${state.analytics.views > 0 ? Math.round((state.analytics.clicks / state.analytics.views) * 100) : 0}%</div>
-            </div>
-          </div>
-          
-          <div class="links" id="public-links">
-            ${state.links.filter(link => link.enabled !== false).map(link => `
-              <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="link-btn">
-                <div class="link-main">
-                  <div class="link-icon">${link.icon || "🔗"}</div>
-                  <div class="link-text">
-                    <span class="link-title">${link.title || "Sin título"}</span>
-                    <span class="link-subtitle">${link.sub || ""}</span>
-                  </div>
-                </div>
-                <div class="link-meta">
-                  <span class="link-clicks">${link.clicks || 0} clicks</span>
-                  <span class="link-cta">Abrir ↗</span>
-                </div>
-              </a>
-            `).join('')}
-          </div>
-          
-          <div class="footer">
-            <div class="socials" id="public-socials">
-              ${state.socials.ig ? `<a class="social-pill" href="${state.socials.ig.startsWith('@') ? 'https://instagram.com/' + state.socials.ig.replace('@', '') : state.socials.ig}" target="_blank" rel="noopener noreferrer" title="Instagram"><i class="fab fa-instagram"></i></a>` : ''}
-              ${state.socials.wa ? `<a class="social-pill" href="${state.socials.wa}" target="_blank" rel="noopener noreferrer" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>` : ''}
-              ${state.socials.x ? `<a class="social-pill" href="${state.socials.x.startsWith('@') ? 'https://x.com/' + state.socials.x.replace('@', '') : state.socials.x}" target="_blank" rel="noopener noreferrer" title="X / Twitter"><i class="fab fa-twitter"></i></a>` : ''}
-            </div>
-            <div class="designer">
-              hecho por <span>@${state.profile.username || "Cronos6x"}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="page-footer">
-      <p>© ${new Date().getFullYear()} ${state.profile.name || "Cronos6x"}. Todos los derechos reservados.</p>
-      <p><a href="index.html">Panel de Administración</a> | <a href="#" id="toggle-stats">Mostrar/ocultar estadísticas</a></p>
-    </div>
-  </div>
-  
-  <script>
-    const pageData = ${JSON.stringify(state, null, 2)};
-    
-    document.addEventListener("DOMContentLoaded", function() {
-      if (pageData.analytics) {
-        pageData.analytics.views = (pageData.analytics.views || 0) + 1;
-        
-        const viewsElement = document.getElementById('public-views');
-        if (viewsElement) {
-          viewsElement.textContent = pageData.analytics.views;
-          
-          const ctrElement = document.getElementById('public-ctr');
-          if (ctrElement && pageData.analytics.views > 0) {
-            const ctr = Math.round((pageData.analytics.clicks / pageData.analytics.views) * 100);
-            ctrElement.textContent = ctr + '%';
-          }
-        }
-      }
-      
-      document.querySelectorAll('.link-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const linkUrl = this.getAttribute('href');
-          const link = pageData.links.find(l => l.url === linkUrl);
-          if (link) {
-            link.clicks = (link.clicks || 0) + 1;
-            pageData.analytics.clicks = (pageData.analytics.clicks || 0) + 1;
-            
-            const clicksElement = document.getElementById('public-clicks');
-            const ctrElement = document.getElementById('public-ctr');
-            const linkClicksElement = this.querySelector('.link-clicks');
-            
-            if (clicksElement) clicksElement.textContent = pageData.analytics.clicks;
-            if (ctrElement && pageData.analytics.views > 0) {
-              const ctr = Math.round((pageData.analytics.clicks / pageData.analytics.views) * 100);
-              ctrElement.textContent = ctr + '%';
-            }
-            if (linkClicksElement) {
-              linkClicksElement.textContent = link.clicks + ' clicks';
-            }
-          }
-        });
-      });
-      
-      const toggleStats = document.getElementById('toggle-stats');
-      const statsElement = document.getElementById('public-stats');
-      
-      if (toggleStats && statsElement) {
-        toggleStats.addEventListener('click', function(e) {
-          e.preventDefault();
-          statsElement.style.display = statsElement.style.display === 'none' ? 'grid' : 'none';
-          this.textContent = statsElement.style.display === 'none' 
-            ? 'Mostrar estadísticas' 
-            : 'Ocultar estadísticas';
-        });
-      }
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      const ref = urlParams.get('ref');
-      if (ref) {
-        console.log('Visitante referido por:', ref);
-      }
-    });
-  </script>
-</body>
-</html>`;
-  
-      const blob = new Blob([publicHtmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `public-page-${state.profile.username || 'cronos6x'}.html`;
-      document.body.appendChild(a);
-      a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-      
-      showToast('HTML público generado y descargado');
-    }
-
-    // ============================================
-    // EVENTOS DE PUBLICACIÓN
-    // ============================================
-    btnOpenPublic.addEventListener("click", () => {
-      const publicUrl = generatePublicUrl();
-      window.open(publicUrl, '_blank');
-    });
-
-    btnExportHtml.addEventListener("click", exportPublicHtml);
-
-    btnCopyLink.addEventListener("click", async () => {
-      const publicUrl = generatePublicUrl();
-      try {
-        await navigator.clipboard.writeText(publicUrl);
-        showToast("URL pública copiada al portapapeles");
-      } catch {
-        showToast("No se pudo copiar la URL");
-      }
-    });
-
-    btnShareWA.addEventListener("click", () => {
-      const publicUrl = generatePublicUrl();
-      const text = encodeURIComponent(
-        `¡Te comparto mi página de links! Visítala aquí:\n${publicUrl}`
-      );
-      window.open(`https://wa.me/?text=${text}`, "_blank");
-    });
-
-    btnShareX.addEventListener("click", () => {
-      const publicUrl = generatePublicUrl();
-      const text = encodeURIComponent(
-        `¡Mira mi página de links! 👇\n${publicUrl}\n\nCreada con @Cronos6x Bio Page`
-      );
-      const url = `https://x.com/intent/tweet?text=${text}`;
-      window.open(url, "_blank");
-    });
-
-    // ============================================
-    // SIMULACIÓN DE TRÁFICO
-    // ============================================
-    function startSimulation() {
-      if (simInterval) return;
-      simInterval = setInterval(() => {
-        const extraViews = Math.floor(Math.random() * 5);
-        const extraClicks = Math.floor(Math.random() * 3);
-
-        state.analytics.views += extraViews;
-        state.analytics.todayViews += extraViews;
-        state.analytics.clicks += extraClicks;
-        state.analytics.todayClicks += extraClicks;
-
-        if (state.links.length > 0 && extraClicks > 0) {
-          const randomLink = state.links[Math.floor(Math.random() * state.links.length)];
-          if (randomLink && randomLink.enabled) {
-            randomLink.clicks += extraClicks;
-          }
-        }
-
-        saveState();
-        renderAnalytics();
-        renderLinks();
-      }, 2500);
-    }
-
-    function stopSimulation() {
-      if (simInterval) {
-        clearInterval(simInterval);
-        simInterval = null;
-      }
-    }
-
-    // ============================================
-    // NOTIFICACIONES
-    // ============================================
-    function showToast(message, type = "success") {
-      toastText.textContent = message;
-      
-      if (type === "error") {
-        toast.style.borderColor = "rgba(239, 68, 68, 0.8)";
-        toast.style.color = "#fecaca";
-        toast.querySelector(".toast-icon").textContent = "❌";
-      } else {
-        toast.style.borderColor = "rgba(34, 197, 94, 0.8)";
-        toast.style.color = "#bbf7d0";
-        toast.querySelector(".toast-icon").textContent = "✅";
-      }
-      
-      toast.style.display = "flex";
-      setTimeout(() => {
-        toast.style.display = "none";
-      }, 2100);
-    }
-
-    // ============================================
-    // INICIALIZACIÓN
-    // ============================================
-    function checkDailyReset() {
-      const today = new Date().toDateString();
-      if (state.analytics.lastReset !== today) {
-        state.analytics.todayViews = 0;
-        state.analytics.todayClicks = 0;
-        state.analytics.lastReset = today;
-        saveState();
-      }
-    }
-
-    function registerVisit() {
-      state.analytics.views += 1;
-      state.analytics.todayViews += 1;
-      saveState();
-      renderAnalytics();
-    }
-
-    checkDailyReset();
-    renderAll();
-    registerVisit();
-    
-    setTimeout(() => {
-      showToast("¡Bienvenido a tu panel de control! Edita y personaliza tu página.");
-    }, 500);
-  </script>
 </body>
 </html>
