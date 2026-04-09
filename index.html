@@ -415,7 +415,7 @@
 
     /* ════════════════════════════════════
        MOBILE LAYOUT (< 768px)
-       Bottom sheet optimizado
+       Bottom sheet optimizado con scroll completo
     ════════════════════════════════════ */
     @media (max-width: 767px) {
       html, body { overflow: hidden; height: 100%; height: 100dvh; }
@@ -435,6 +435,7 @@
         z-index: 0;
       }
 
+      /* Panel desplazable completo */
       .sidebar {
         position: fixed;
         left: 0; right: 0; bottom: 0;
@@ -449,15 +450,28 @@
         transition: max-height .32s cubic-bezier(.2,0,0,1);
         padding-bottom: var(--safe-bottom);
         backdrop-filter: blur(2px);
+        display: block;           /* Cambio de flex a bloque */
+        overflow-y: auto;         /* Scroll vertical en todo el panel */
+        -webkit-overflow-scrolling: touch;
       }
 
-      /* Tirador más prominente */
+      .sidebar.collapsed { max-height: 148px; overflow-y: hidden; }
+      .sidebar.expanded  { max-height: 85vh; }
+
+      .sidebar::before { display: none; }
+
+      /* Tirador sticky */
       .sheet-handle {
         display: flex;
         justify-content: center;
         padding: 14px 0 8px;
         cursor: grab;
         touch-action: none;
+        position: sticky;
+        top: 0;
+        background: var(--panel);
+        z-index: 10;
+        border-radius: 24px 24px 0 0;
       }
       .sheet-handle-bar {
         width: 48px; height: 5px;
@@ -466,14 +480,11 @@
         opacity: 0.9;
       }
 
-      .sidebar.collapsed { max-height: 148px; }
-      .sidebar.expanded  { max-height: 85vh; }
-
-      .sidebar::before { display: none; }
-
+      /* Ajustes de secciones para bloque */
       .header {
         padding: 12px 20px 12px;
         border-bottom: 1px solid var(--border);
+        flex-shrink: unset;
       }
       .logo-text { font-size: 18px; }
       .tagline { display: block; font-size: 11px; }
@@ -481,8 +492,8 @@
       .add-form {
         padding: 18px 20px;
         gap: 14px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        flex-shrink: unset;
+        border-bottom: 1px solid var(--border);
       }
 
       input[type="text"],
@@ -497,14 +508,22 @@
         padding: 18px;
         font-size: 17px;
         border-radius: 18px;
+        margin-bottom: 8px;
       }
 
-      .list-header { padding: 12px 20px 8px; }
+      .list-header {
+        padding: 12px 20px 8px;
+        flex-shrink: unset;
+        border-bottom: none;
+      }
+
       .locations-list {
         padding: 0 20px 14px;
-        max-height: 40vh;
+        max-height: 40vh;          /* Scroll independiente para la lista */
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        flex: unset;
+        display: block;
       }
 
       .loc-card-header { padding: 14px; }
@@ -659,6 +678,7 @@
     const sheetHandle = document.getElementById('sheetHandle');
     const sheetToggle = document.getElementById('sheetToggle');
     const toggleBadge = document.getElementById('toggleBadge');
+    const locationInput = document.getElementById('locationInput');
 
     const isMobile = () => window.innerWidth < 768;
     let sheetExpanded = true;
@@ -705,6 +725,15 @@
       if (isMobile() && sheetExpanded) setSheet(false);
     });
 
+    // Scroll suave al input cuando recibe foco (para evitar que el teclado lo tape)
+    if (isMobile()) {
+      locationInput.addEventListener('focus', () => {
+        setTimeout(() => {
+          locationInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      });
+    }
+
     /* ═══════════════════════ STATE ═══════════════════════ */
     const COLORS = ['#00e5a0','#0099ff','#ff4d6d','#ffd166','#c77dff','#ff9f1c','#00c8ff','#ff6b6b'];
     let locations     = [];
@@ -712,7 +741,6 @@
     let selectedColor = '#00e5a0';
     let debounceTimer = null;
 
-    const locationInput = document.getElementById('locationInput');
     const suggestionsEl = document.getElementById('suggestions');
     const radiusInput   = document.getElementById('radiusInput');
     const unitSelect    = document.getElementById('unitSelect');
